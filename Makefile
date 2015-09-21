@@ -1,5 +1,5 @@
 CC = clang++
-CFLAGS = -std=c++11
+CFLAGS = -Wall
 
 ASSIGNMENTS = pa1
 
