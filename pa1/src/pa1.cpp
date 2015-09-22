@@ -4,7 +4,7 @@
 #include "pa1.h"
 
 MagicSquare::MagicSquare(int inputtedLength) {
-  length = inputtedLength;
+  this->length = inputtedLength;
   if (isValidSize()) {
     grid.resize(length);
     for (size_t i = 0; i < length; i++) {
@@ -58,8 +58,30 @@ bool MagicSquare::isValidSize() {
  * Source: http://www.geeksforgeeks.org/magic-square/
  */
 void MagicSquare::build() {
-  int magicConstant = length * (1 + pow(length, 2)) / 2;
-  return;
+  // int magicConstant = length * (1 + pow(length, 2)) / 2;
+  for (size_t i = 0; i < length; i++) {
+    for (size_t j = 0; j < length; j++) {
+      grid[i][j] = -1;
+    }
+  }
+  int row = 0;
+  int col = length / 2;
+  int numSet = 0;
+  while (numSet < length * length) {
+    while (grid[row][col] != -1) {
+      row = (row + 1) % length;
+    }
+    std::cout << "row: " << row << ", col: " << col << std::endl;
+    std::cout << "size: " << grid[row].size() << std::endl;
+    std::cout << "val: " << grid[row][col] << std::endl;
+    grid[row][col] = numSet + 1;
+    std::cout << "val: " << grid[row][col] << std::endl;
+    numSet++;
+    row = (row - 1) % length;
+    col = (col + 1) % length;
+    std::cout << "row: " << row << ", col: " << col << std::endl;
+  }
+  std::cout << "Build square" << std::endl;
 }
 
 void MagicSquare::test() {
