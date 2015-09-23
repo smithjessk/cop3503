@@ -11,6 +11,8 @@ class MagicSquare {
   // Outside vectors are rows, inside ones are elements in that row
   std::vector<std::vector<int> > grid;
 
+  void resizeGrid();
+
   int rowSum(int row);
 
   int colSum(int col);

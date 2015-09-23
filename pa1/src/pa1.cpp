@@ -1,7 +1,23 @@
 #include <iostream>
 #include <math.h>
+#include <cstdio>
 
 #include "pa1.h"
+
+/**
+ * Similar functionality to number % modulo, except this always ensures a 
+ * positive result.
+ * @param  number The number to take the mod of
+ * @param  modulo The number by which we divide
+ * @return        The positive integer n such that n = number (mod) modulo.
+ */
+int takePositiveMod(int number, int modulo) {
+  int result = number % modulo;
+  if (result < 0) {
+    result += modulo;
+  }
+  return result;
+}
 
 MagicSquare::MagicSquare(int inputtedLength) {
   this->length = inputtedLength;
@@ -9,6 +25,14 @@ MagicSquare::MagicSquare(int inputtedLength) {
     grid.resize(length);
     for (size_t i = 0; i < length; i++) {
       grid[i].resize(length);
+    }
+  }
+}
+
+void MagicSquare::resizeGrid() {
+  for (size_t i = 0; i < length; i++) {
+    for (size_t j = 0; j < length; j++) {
+      grid[i][j] = -1;
     }
   }
 }
@@ -55,33 +79,29 @@ bool MagicSquare::isValidSize() {
 /**
  * The magic constant is the value to which every row, column, and diagonal
  * sums to.
- * Source: http://www.geeksforgeeks.org/magic-square/
+ * Source: http://mathworld.wolfram.com/MagicSquare.html
  */
 void MagicSquare::build() {
-  // int magicConstant = length * (1 + pow(length, 2)) / 2;
-  for (size_t i = 0; i < length; i++) {
-    for (size_t j = 0; j < length; j++) {
-      grid[i][j] = -1;
-    }
-  }
+  resizeGrid();
   int row = 0;
   int col = length / 2;
   int numSet = 0;
   while (numSet < length * length) {
-    while (grid[row][col] != -1) {
-      row = (row + 1) % length;
-    }
-    std::cout << "row: " << row << ", col: " << col << std::endl;
-    std::cout << "size: " << grid[row].size() << std::endl;
-    std::cout << "val: " << grid[row][col] << std::endl;
     grid[row][col] = numSet + 1;
-    std::cout << "val: " << grid[row][col] << std::endl;
     numSet++;
-    row = (row - 1) % length;
-    col = (col + 1) % length;
-    std::cout << "row: " << row << ", col: " << col << std::endl;
+    int nextRow = takePositiveMod(row - 1, length), 
+      nextCol = takePositiveMod(col + 1, length);
+    if (grid[nextRow][nextCol] == -1) { 
+      row = nextRow;
+      col = nextCol;
+    } else {
+      if (numSet < length * length) {
+        while (grid[row][col] != -1) {
+          row = takePositiveMod(row + 1, length);
+        }
+      }
+    }
   }
-  std::cout << "Build square" << std::endl;
 }
 
 void MagicSquare::test() {
