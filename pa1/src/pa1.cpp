@@ -23,15 +23,15 @@ MagicSquare::MagicSquare(int inputtedLength) {
   this->length = inputtedLength;
   if (isValidSize()) {
     grid.resize(length);
-    for (size_t i = 0; i < length; i++) {
+    for (int i = 0; i < length; i++) {
       grid[i].resize(length);
     }
   }
 }
 
 void MagicSquare::resizeGrid() {
-  for (size_t i = 0; i < length; i++) {
-    for (size_t j = 0; j < length; j++) {
+  for (int i = 0; i < length; i++) {
+    for (int j = 0; j < length; j++) {
       grid[i][j] = -1;
     }
   }
@@ -40,7 +40,7 @@ void MagicSquare::resizeGrid() {
 int MagicSquare::rowSum(int row) {
   int sum = 0;
   std::vector<int> entries = grid[row];
-  for (size_t col = 0; col < length; col++) {
+  for (int col = 0; col < length; col++) {
     sum += grid[row][col];
   }
   return sum;
@@ -48,7 +48,7 @@ int MagicSquare::rowSum(int row) {
 
 int MagicSquare::colSum(int col) {
   int sum = 0;
-  for (size_t row = 0; row < length; row++) {
+  for (int row = 0; row < length; row++) {
     sum += grid[row][col];
   }
   return sum;
@@ -56,7 +56,7 @@ int MagicSquare::colSum(int col) {
 
 int MagicSquare::leftDiagSum() {
   int sum = 0;
-  for (size_t row = 0; row < length; row++) {
+  for (int row = 0; row < length; row++) {
     sum += grid[row][row];
   }
   return sum;
@@ -64,7 +64,7 @@ int MagicSquare::leftDiagSum() {
 
 int MagicSquare::rightDiagSum() {
   int sum = 0;
-  for (size_t row = 0; row < length; row++) {
+  for (int row = 0; row < length; row++) {
     sum += grid[row][length - row - 1];
   }
   return sum;
@@ -106,11 +106,11 @@ void MagicSquare::build() {
 
 void MagicSquare::test() {
   std::cout << "Checking the sums of every row: ";
-  for (size_t i = 0; i < length; i++) {
+  for (int i = 0; i < length; i++) {
     std::cout << rowSum(i) << " ";
   }
   std::cout << "\nChecking the sums of every column: ";
-  for (size_t i = 0; i < length; i++) {
+  for (int i = 0; i < length; i++) {
     std::cout << colSum(i) << " ";
   }
   std::cout << "\nChecking the sums of every diagonal: ";
