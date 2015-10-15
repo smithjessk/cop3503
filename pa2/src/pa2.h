@@ -18,10 +18,10 @@ class Node {
 
   // If numHops == 0, delete this node. Otherwise decrement numHops and pass it
   // along.
-  T deleteNode(int numHops);
+  void deleteNode(int numHops);
 
   // If false, pass to the next item in the list. Else, delete this node.
-  T deleteNode(bool (*shouldDelete)(T));
+  void deleteNode(bool (*shouldDelete)(T));
 };
 
 template <class T>
@@ -32,13 +32,15 @@ class LinkedList {
  public:
   LinkedList();
 
+  void print();
+
   Node<T> *getHead();
 
   Node<T> *append(T value);
 
-  T deleteNode(int index);
+  void deleteNode(int index);
 
-  T deleteNode(bool (*shouldDelete)(T));
+  void deleteNode(bool (*shouldDelete)(T));
 };
 
 #endif // PA2_HEADER

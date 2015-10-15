@@ -51,6 +51,38 @@ Node<T> *LinkedList<T>::append(T value) {
   return temp->getNext();
 }
 
+template <class T>
+void LinkedList<T>::print() {
+  Node<T> *current = getHead();
+  std::cout << "Printing..." << std::endl;
+  while (current != NULL) {
+    std::cout << current->getValue() << std::endl;
+    current = current->getNext();
+  }
+}
+
+template <class T>
+void LinkedList<T>::deleteNode(int index) {
+  if (index < 0) {
+    std::cout << "Cannot delete at indices less than zero" << std::endl;
+    return; 
+  }
+  Node<T> *current = getHead();
+  int numJumps = index;
+  while (numJumps > 0) {
+    if (current->getNext() == NULL) {
+      std::cout << "Cannot delete at indices longer than the list" << 
+        std::endl;
+      return;
+    }
+    current = current->getNext();
+    numJumps--;
+  }
+  std::cout << "Here is where we would delete the node with information " << 
+    current->getValue() << std::endl;
+  return;
+}
+
 struct ProgramInfo {
   int id;
   std::string name;
@@ -61,11 +93,20 @@ struct ProgramInfo {
   }
 };
 
+struct Chunk {
+  int startPage, endPage;
+
+  Chunk(int start, int end) {
+    startPage = start;
+    endPage = end;
+  }
+};
+
 int main() {
-  ProgramInfo pInfo(1, "a");
-  LinkedList<ProgramInfo> list;
-  list.append(pInfo);
-  list.append(pInfo);
-  std::cout << list.getHead()->getNext()->getValue().id << std::endl;
+  LinkedList<int> list;
+  list.append(1);
+  list.append(2);
+  list.append(3);
+  list.deleteNode(120);
   return 0;
 }
