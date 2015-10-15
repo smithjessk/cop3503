@@ -5,27 +5,40 @@ template <class T>
 class Node {
  private:
   T value;
-  T *next;
+  Node<T> *next;
 
  public:
   Node(T value);
 
   T setValue(T value);
-  T *setNext(T *next);
+  Node<T> *setNext(Node<T> *node);
 
   T getValue();
-  T *getNext();
+  Node<T> *getNext();
+
+  // If numHops == 0, delete this node. Otherwise decrement numHops and pass it
+  // along.
+  T deleteNode(int numHops);
+
+  // If false, pass to the next item in the list. Else, delete this node.
+  T deleteNode(bool (*shouldDelete)(T));
 };
 
 template <class T>
 class LinkedList {
  private:
-  Node<T> head;
+  Node<T> *head;
 
  public:
-  LinkedList(T value);
-  Node<T> getHead();
-  T addNode(T value);
+  LinkedList();
+
+  Node<T> *getHead();
+
+  Node<T> *append(T value);
+
+  T deleteNode(int index);
+
+  T deleteNode(bool (*shouldDelete)(T));
 };
 
 #endif // PA2_HEADER
