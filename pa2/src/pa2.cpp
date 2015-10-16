@@ -98,17 +98,60 @@ void print_instructions() {
     "5. Exit\n" << std::endl;
 }
 
+int get_choice() {
+  int choice;
+  std::cout << "Choice - ";
+  std::cin >> choice;
+  std::cout << std::endl;
+  return choice;
+}
+
+std::string get_program_name() {
+  std::string name;
+  std::cout << "Program name - ";
+  std::cin >> name;
+  std::cout << std::endl;
+  return name;
+}
+
+ProgramInfo get_program_info() {
+  std::string name = get_program_name();
+  int size;
+  std::cout << "Program size (KB) - ";
+  std::cin >> size;
+  std::cout << std::endl;
+  return ProgramInfo(name, size);
+}
+
 int run_loop(std::string algorithm) {
   MemoryAllocator mem_alloc(algorithm);
+  print_instructions();
+  int action_choice = -1;
+  while (action_choice != 5) {
+    action_choice = get_choice();
+    switch (action_choice) {
+      case 1:
+        mem_alloc.add_program(get_program_info());
+        break;
+      case 2:
+        mem_alloc.kill_program(get_program_name());
+        break;
+      case 3:
+        mem_alloc.print_fragmentation();
+      case 4:
+        mem_alloc.print_memory();
+        break;
+      case 5: // Will exit next time
+        break;
+      default:
+        std::cout << "Unknown option " << action_choice << std::endl;
+        break;
+    }
+  }
   return 0;
 }
 
 int main(int argc, char** argv) {
-  /*LinkedList<int> list;
-  list.append(1);
-  list.append(2);
-  list.append(3);
-  list.delete_node(120);*/
   std::string algorithm = argv[1];
   if (algorithm.compare("best") == 0 || algorithm.compare("worst") == 0) {
     return run_loop(algorithm);

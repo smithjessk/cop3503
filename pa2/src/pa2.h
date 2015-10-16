@@ -39,12 +39,12 @@ class LinkedList {
 };
 
 struct ProgramInfo {
-  int id;
   std::string name;
+  int size; // In KB
 
-  ProgramInfo(int id, std::string name) {
-    this->id = id;
+  ProgramInfo(std::string name, int size) {
     this->name = name;
+    this->size = size;
   }
 };
 
