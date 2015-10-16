@@ -110,9 +110,7 @@ int main(int argc, char** argv) {
   list.append(3);
   list.delete_node(120);*/
   std::string algorithm = argv[1];
-  if (algorithm.compare("best") == 0) {
-    return run_loop(algorithm);
-  } else if (algorithm.compare("worst") == 0) {
+  if (algorithm.compare("best") == 0 || algorithm.compare("worst") == 0) {
     return run_loop(algorithm);
   } else {
     std::printf("Unknown algorithm \"%s\"\n", algorithm.c_str());
