@@ -1,5 +1,8 @@
 #include <iostream>
 #include <cstdio>
+#include <vector>
+#include <map>
+#include <algorithm>
 
 #include "pa2.h"
 
@@ -87,6 +90,74 @@ void LinkedList<T>::delete_node(int index) {
 MemoryAllocator::MemoryAllocator(std::string algorithm) {
   this->algorithm = algorithm;
   std::printf("Using %s fit algorithm\n", algorithm.c_str());
+  this->free_mem = LinkedList<Chunk>();
+  free_mem.append(Chunk(0, 31));
+  this->used_mem = LinkedList<Chunk>();
+
+}
+
+typedef std::pair<Node<Chunk>*, int> MyPairType;
+struct CompareSecond
+{
+    bool operator()(const MyPairType& left, const MyPairType& right) const
+    {
+        return left.second < right.second;
+    }
+};
+
+
+void MemoryAllocator::add_program(ProgramInfo prog_info) {
+  std::map<Node<Chunk>*, int> free_slots;
+  Node<Chunk> *current = free_mem.get_head();
+  while (current != NULL) {
+    int free_size = current->get_value().end_page - 
+      current->get_value().start_page;  
+    if (free_size >= (prog_info.size / 4)) {
+      free_slots[current] = free_size;
+    }
+    current = current->get_next();
+  }
+  if (free_slots.size() == 0){
+    std::cout << "Not enough memory" << std::endl;
+  }
+  if (this->algorithm == "best") {
+    std::pair<Node<Chunk>*, int> min = 
+      *std::min_element(free_slots.begin(), free_slots.end(), CompareSecond());
+    Node<Chunk> *ptr = min.first;
+  }
+}
+
+void MemoryAllocator::print_fragmentation() {
+  int num_fragments = 0;
+  Node<Chunk> *current = free_mem.get_head();
+  while (current != NULL) {
+    num_fragments++;
+    current = current->get_next();
+  }
+  std::printf("There are %d fragment(s)\n", num_fragments);
+}
+
+void MemoryAllocator::print_memory() {
+  std::map<int, std::string> used_pages; // Page to program name
+  Node<Chunk> *current = used_mem.get_head();
+  while (current != NULL) {
+    Chunk info = current->get_value();
+    for (int i = info.start_page; i < info.end_page; i++) {
+      used_pages[i] = "Occupado";
+    }
+    current = current->get_next();
+  }
+  for (int row = 0; row < 4; row++) {
+    for (int col = 0; col < 8; col++) {
+      int curr_page = row * 8 + col;
+      if (used_pages.find(curr_page) != used_pages.end()) {
+        std::cout << used_pages[curr_page] << " " << std::endl;
+      } else {
+        std::cout << "Free " << std::endl;
+      }
+    }
+    std::cout << std::endl;
+  }
 }
 
 void print_instructions() {
@@ -134,10 +205,11 @@ int run_loop(std::string algorithm) {
         mem_alloc.add_program(get_program_info());
         break;
       case 2:
-        mem_alloc.kill_program(get_program_name());
+        // mem_alloc.kill_program(get_program_name());
         break;
       case 3:
         mem_alloc.print_fragmentation();
+        break;
       case 4:
         mem_alloc.print_memory();
         break;
