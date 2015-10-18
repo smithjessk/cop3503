@@ -93,6 +93,15 @@ void LinkedList<T>::delete_node(int index) {
   return;
 }
 
+template <class T>
+void LinkedList<T>::apply(void (*func)(Node<T>*)) {
+  Node<T> *current = get_head();
+  while (current != NULL) {
+    (*func)(current);
+    current = current->get_next();
+  }
+}
+
 // MemoryAllocator methods
 MemoryAllocator::MemoryAllocator(std::string algorithm) {
   this->algorithm = algorithm;
@@ -127,7 +136,7 @@ void MemoryAllocator::add_program(ProgramInfo prog_info) {
 
   while (current != NULL) {
     int free_size = current->get_value().end_page - 
-      current->get_value().start_page;  
+      current->get_value().start_page + 1;
     if (free_size >= (num_pages)) {
       free_slots[current] = free_size;
     }
@@ -151,7 +160,7 @@ void MemoryAllocator::add_program(ProgramInfo prog_info) {
       smallestChunk.start_page);*/
 
     Chunk allocatedMemory(smallestChunk.start_page, smallestChunk.start_page + 
-      num_pages);
+      num_pages - 1);
     Node<Chunk> *new_node = new Node<Chunk>(allocatedMemory);
 
     // Put an entry in the used
@@ -189,12 +198,21 @@ void MemoryAllocator::print_fragmentation() {
   std::printf("There are %d fragment(s)\n\n", num_fragments);
 }
 
+void func(Node<Chunk> *current) {
+  Chunk info = current->get_value();
+  printf("Start: %d, End: %d\n", info.start_page, info.end_page);
+}
+
 void MemoryAllocator::print_memory() {
+  std::printf("Free memory map:\n");
+  free_mem.apply(func);
+  std::printf("\nUsed memory map:\n");
+  used_mem.apply(func);
   std::map<int, std::string> used_pages; // Page to program name
   Node<Chunk> *current = used_mem.get_head();
   while (current != NULL) {
     Chunk info = current->get_value();
-    for (int i = info.start_page; i < info.end_page; i++) {
+    for (int i = info.start_page; i <= info.end_page; i++) {
       used_pages[i] = "Occupado";
     }
     current = current->get_next();
@@ -247,6 +265,7 @@ ProgramInfo get_program_info() {
 
 int run_loop(std::string algorithm) {
   MemoryAllocator mem_alloc(algorithm);
+
   print_instructions();
   int action_choice = -1;
   while (action_choice != 5) {
@@ -267,7 +286,7 @@ int run_loop(std::string algorithm) {
       case 5: // Will exit next time
         break;
       default:
-        std::cout << "Unknown option " << action_choice << std::endl;
+        std::cout << "Unknown option " << std::endl;
         return 0;
     }
   }

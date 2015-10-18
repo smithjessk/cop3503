@@ -35,7 +35,7 @@ class LinkedList {
 
   void delete_node(int index);
 
-  void delete_node(bool (*shouldDelete)(T));
+  void apply(void (*func)(Node<T> *));
 };
 
 struct ProgramInfo {
