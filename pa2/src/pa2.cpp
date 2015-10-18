@@ -198,16 +198,16 @@ void MemoryAllocator::print_fragmentation() {
   std::printf("There are %d fragment(s)\n\n", num_fragments);
 }
 
-void func(Node<Chunk> *current) {
+void print_bounds(Node<Chunk> *current) {
   Chunk info = current->get_value();
   printf("Start: %d, End: %d\n", info.start_page, info.end_page);
 }
 
 void MemoryAllocator::print_memory() {
   std::printf("Free memory map:\n");
-  free_mem.apply(func);
+  free_mem.apply(print_bounds);
   std::printf("\nUsed memory map:\n");
-  used_mem.apply(func);
+  used_mem.apply(print_bounds);
   std::map<int, std::string> used_pages; // Page to program name
   Node<Chunk> *current = used_mem.get_head();
   while (current != NULL) {
