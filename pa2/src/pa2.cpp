@@ -132,8 +132,6 @@ void MemoryAllocator::add_program(ProgramInfo prog_info) {
   Node<Chunk> *current = free_mem.get_head();
   int num_pages = ceil(prog_info.size / 4.0);
 
-  // std::printf("Num pages: %d\n", num_pages);
-
   while (current != NULL) {
     int free_size = current->get_value().end_page - 
       current->get_value().start_page + 1;
@@ -142,50 +140,52 @@ void MemoryAllocator::add_program(ProgramInfo prog_info) {
     }
     current = current->get_next();
   }
+
   if (free_slots.size() == 0){
     std::cout << "Not enough memory" << std::endl;
     return;
-
   }
+
+  Node<Chunk> *new_node = NULL;
+
   if (this->algorithm == "best") {
     std::pair<Node<Chunk>*, int> min = 
       *std::min_element(free_slots.begin(), free_slots.end(), CompareSecond());
-
     Chunk smallestChunk = min.first->get_value();
-
     min.first->set_value(Chunk(smallestChunk.start_page + num_pages, 
       smallestChunk.end_page));
-
-    /*std::printf("Smallest diff: %d\n", smallestChunk.end_page - 
-      smallestChunk.start_page);*/
-
-    Chunk allocatedMemory(smallestChunk.start_page, smallestChunk.start_page + 
-      num_pages - 1);
-    Node<Chunk> *new_node = new Node<Chunk>(allocatedMemory);
-
-    // Put an entry in the used
-    current = used_mem.get_head();
-    Node<Chunk>* last = used_mem.get_head();
-    while (current != NULL) {
-      // Keep going until you pass the starting pointer of allocatedMemory
-      if (current->get_value().start_page > allocatedMemory.start_page) {
-        last->set_next(new_node);
-        new_node->set_next(current);
-        std::printf("Program %s added successfully: %d page(s) used\n\n", 
-          prog_info.name.c_str(), num_pages);
-        return;
-      } else {
-        // std::cout << "Jumping" << std::endl;
-        last = current;
-        current = current->get_next();
-      }
-    }
-    used_mem.append(allocatedMemory);
-    std::printf("Program %s added successfully: %d page(s) used\n\n", 
-      prog_info.name.c_str(), num_pages);
+    Chunk allocated_memory(smallestChunk.start_page, 
+      smallestChunk.start_page + num_pages - 1);
+    new_node = new Node<Chunk>(allocated_memory);
   } else {
-    // do something similar
+    // Do something similar
   }
+
+  // Put an entry in the used
+  current = used_mem.get_head();
+  Node<Chunk>* last = used_mem.get_head();
+  while (current != NULL) {
+    // Keep going until you pass the starting pointer of allocated_memory
+    if (current->get_value().start_page > new_node->get_value().start_page) {
+      last->set_next(new_node);
+      new_node->set_next(current);
+      std::printf("Program %s added successfully: %d page(s) used\n\n", 
+        prog_info.name.c_str(), num_pages);
+      return;
+    } else {
+      last = current;
+      current = current->get_next();
+    }
+  }
+  used_mem.append(new_node->get_value());
+  std::printf("Program %s added successfully: %d page(s) used\n\n", 
+    prog_info.name.c_str(), num_pages);
+}
+
+void MemoryAllocator::kill_program(std::string program_name) {
+  // Find entry in used (ensure that it exists)
+  // Remove it
+  // 
 }
 
 void MemoryAllocator::print_fragmentation() {
@@ -275,7 +275,7 @@ int run_loop(std::string algorithm) {
         mem_alloc.add_program(get_program_info());
         break;
       case 2:
-        // mem_alloc.kill_program(get_program_name());
+        mem_alloc.kill_program(get_program_name());
         break;
       case 3:
         mem_alloc.print_fragmentation();
@@ -294,13 +294,13 @@ int run_loop(std::string algorithm) {
 }
 
 int main(int argc, char** argv) {
-  std::string algorithm = argv[1];
-  if (algorithm.compare("best") == 0 || algorithm.compare("worst") == 0) {
-    return run_loop(algorithm);
-  } else {
-    std::printf("Unknown algorithm \"%s\"\n", algorithm.c_str());
-    std::cout << "First argument must be the algorithm to use " << 
-      "(namely, \"best\" or \"worst\")" << std::endl;
-    return 0;
+  if (argv[1] != NULL) {
+    std::string algorithm = argv[1];
+    if (algorithm.compare("best") == 0 || algorithm.compare("worst") == 0) {
+      return run_loop(algorithm);
+    }
   }
+  std::printf("First argument must be the algorithm to use (namely, ");
+  std::printf("\"best\" or \"worst\")\n");
+  return 0;
 }
