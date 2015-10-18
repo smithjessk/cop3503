@@ -186,7 +186,7 @@ void MemoryAllocator::print_fragmentation() {
     num_fragments++;
     current = current->get_next();
   }
-  std::printf("There are %d fragment(s)\n", num_fragments);
+  std::printf("There are %d fragment(s)\n\n", num_fragments);
 }
 
 void MemoryAllocator::print_memory() {
@@ -210,6 +210,7 @@ void MemoryAllocator::print_memory() {
     }
     std::cout << std::endl;
   }
+  std::cout << std::endl;
 }
 
 void print_instructions() {
@@ -225,6 +226,7 @@ int get_choice() {
   int choice;
   std::cout << "Choice - ";
   std::cin >> choice;
+  std::cout << std::endl;
   return choice;
 }
 
