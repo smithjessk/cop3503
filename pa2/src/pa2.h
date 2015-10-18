@@ -57,11 +57,22 @@ struct Chunk {
   }
 };
 
+struct UsedMemoryChunk : Chunk {
+  std::string program_name;
+
+  UsedMemoryChunk(int start, int end, std::string name) : 
+    Chunk(start_page, end_page) {
+    start_page = start;
+    end_page = end;
+    program_name = name;
+  }
+};
+
 class MemoryAllocator {
  private:
   std::string algorithm;
   LinkedList<Chunk> free_mem;
-  LinkedList<Chunk> used_mem;
+  LinkedList<UsedMemoryChunk> used_mem;
 
  public:
   MemoryAllocator(std::string algorithm);

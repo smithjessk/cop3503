@@ -108,7 +108,7 @@ MemoryAllocator::MemoryAllocator(std::string algorithm) {
   std::printf("Using %s fit algorithm\n", algorithm.c_str());
   this->free_mem = LinkedList<Chunk>();
   free_mem.append(Chunk(0, 31));
-  this->used_mem = LinkedList<Chunk>();
+  this->used_mem = LinkedList<UsedMemoryChunk>();
 
 }
 
@@ -146,37 +146,38 @@ void MemoryAllocator::add_program(ProgramInfo prog_info) {
     return;
   }
 
-  Node<Chunk> *new_node = NULL;
-
+  Node<UsedMemoryChunk> *new_node = NULL;
   if (this->algorithm == "best") {
     std::pair<Node<Chunk>*, int> min = 
       *std::min_element(free_slots.begin(), free_slots.end(), CompareSecond());
     Chunk smallestChunk = min.first->get_value();
     min.first->set_value(Chunk(smallestChunk.start_page + num_pages, 
       smallestChunk.end_page));
-    Chunk allocated_memory(smallestChunk.start_page, 
-      smallestChunk.start_page + num_pages - 1);
-    new_node = new Node<Chunk>(allocated_memory);
+    int chunk_start = smallestChunk.start_page,
+      chunk_end = smallestChunk.start_page + num_pages - 1;
+    new_node = new Node<UsedMemoryChunk>(UsedMemoryChunk(chunk_start, chunk_end, prog_info.name));
   } else {
     // Do something similar
   }
 
   // Put an entry in the used
-  current = used_mem.get_head();
-  Node<Chunk>* last = used_mem.get_head();
-  while (current != NULL) {
-    // Keep going until you pass the starting pointer of allocated_memory
-    if (current->get_value().start_page > new_node->get_value().start_page) {
+  Node<UsedMemoryChunk>* used_current = used_mem.get_head();
+  Node<UsedMemoryChunk>* last = used_mem.get_head();
+  while (used_current != NULL) {
+    // Keep going until you pass the starting page of the allocated memory
+    if (used_current->get_value().start_page > 
+      new_node->get_value().start_page) {
       last->set_next(new_node);
-      new_node->set_next(current);
+      new_node->set_next(used_current);
       std::printf("Program %s added successfully: %d page(s) used\n\n", 
         prog_info.name.c_str(), num_pages);
       return;
     } else {
-      last = current;
-      current = current->get_next();
+      last = used_current;
+      used_current = used_current->get_next();
     }
   }
+  // In case we need to append at the end
   used_mem.append(new_node->get_value());
   std::printf("Program %s added successfully: %d page(s) used\n\n", 
     prog_info.name.c_str(), num_pages);
@@ -185,7 +186,12 @@ void MemoryAllocator::add_program(ProgramInfo prog_info) {
 void MemoryAllocator::kill_program(std::string program_name) {
   // Find entry in used (ensure that it exists)
   // Remove it
-  // 
+  // Keep going over free_mem until you pass the starting page of the freed
+  // memory (via the start_page value on the chunk). Then, create a new node
+  // and have it point to the first node with start_page greater than the freed
+  // program's end_page. 
+  // Collapse to the left by seeing if prev.end_page + 1 = curr.start_page,
+  // collapse to the right with curr.end_page + 1 = next.start_page
 }
 
 void MemoryAllocator::print_fragmentation() {
@@ -203,13 +209,18 @@ void print_bounds(Node<Chunk> *current) {
   printf("Start: %d, End: %d\n", info.start_page, info.end_page);
 }
 
+void print_bounds(Node<UsedMemoryChunk> *current) {
+  UsedMemoryChunk info = current->get_value();
+  printf("Start: %d, End: %d\n", info.start_page, info.end_page);
+}
+
 void MemoryAllocator::print_memory() {
   std::printf("Free memory map:\n");
   free_mem.apply(print_bounds);
   std::printf("\nUsed memory map:\n");
   used_mem.apply(print_bounds);
   std::map<int, std::string> used_pages; // Page to program name
-  Node<Chunk> *current = used_mem.get_head();
+  Node<UsedMemoryChunk> *current = used_mem.get_head();
   while (current != NULL) {
     Chunk info = current->get_value();
     for (int i = info.start_page; i <= info.end_page; i++) {
@@ -265,7 +276,6 @@ ProgramInfo get_program_info() {
 
 int run_loop(std::string algorithm) {
   MemoryAllocator mem_alloc(algorithm);
-
   print_instructions();
   int action_choice = -1;
   while (action_choice != 5) {
