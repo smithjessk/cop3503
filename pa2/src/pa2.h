@@ -12,6 +12,8 @@ class Node {
  public:
   Node(T value);
 
+  ~Node();
+
   T set_value(T value);
   Node<T> *set_next(Node<T> *node);
 
@@ -28,6 +30,8 @@ class LinkedList {
   LinkedList();
 
   void print();
+
+  Node<T> *set_head(Node<T> *head);
 
   Node<T> *get_head();
 
