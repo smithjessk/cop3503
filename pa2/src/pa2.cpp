@@ -205,21 +205,24 @@ void MemoryAllocator::add_program(ProgramInfo prog_info) {
 
 void MemoryAllocator::defragment() {
   Node<Chunk> *current = free_mem.get_head(),
-    *last = free_mem.get_head();
+    *last = NULL;
   while (current != NULL) {
     // Collapse to the left by seeing if prev.end_page + 1 = curr.start_page,
-    int last_end = last->get_value().end_page,
-      current_start = current->get_value().start_page;
-    printf("Compare that shit: %d %d\n", last_end + 1, current_start);
-    if (last_end + 1 == current_start) {
-      Chunk expanded(last_end, current_start);
-      last->set_value(expanded);
-      last->set_next(current->get_next());
-      printf("Updating last.next to %p\n", (void *) current);
-      return;
-    } else {
+    if (last == NULL) {
       last = current;
       current = current->get_next();
+    } else {
+      int last_end = last->get_value().end_page,
+      current_start = current->get_value().start_page;  
+      if (last_end + 1 == current_start) {
+        Chunk expanded(last_end, current->get_value().end_page);
+        last->set_value(expanded);
+        last->set_next(current->get_next());
+        return;
+      } else {
+        last = current;
+        current = current->get_next();
+      }
     }
   }
 }
@@ -229,10 +232,6 @@ void MemoryAllocator::kill_program(std::string program_name) {
   bool program_found = false;
   Node<UsedMemoryChunk> *used_current = used_mem.get_head();
   Node<UsedMemoryChunk> *last = NULL;
-
-  /*printf("printing memory before doing anything:\n\n");
-  used_mem.apply(print_bounds);*/
-
   while (used_current != NULL && !program_found) {
     UsedMemoryChunk current_chunk = used_current->get_value();
     if (program_name.compare(current_chunk.program_name) == 0) {
@@ -240,7 +239,6 @@ void MemoryAllocator::kill_program(std::string program_name) {
       freed_end_page = current_chunk.end_page;
       if (last != NULL) {
         last->set_next(used_current->get_next());
-        // printf("Set last.next to %p\n\n", (void *) last->get_next());  
       }
       program_found = true;
     } else {
@@ -258,14 +256,9 @@ void MemoryAllocator::kill_program(std::string program_name) {
     used_current->get_value().end_page);
   Node<Chunk> *new_node = new Node<Chunk>(freed);
 
-  // used_mem.delete_node(0);
-  // used_mem.last = NULL;
   if (used_mem.get_head() == used_current) {
     used_mem.set_head(NULL);
   }
-  printf("printing memory after doing stuff\n\n");
-  used_mem.apply(print_bounds);
-  printf("done\n\n");
 
   // Keep going over free_mem until you pass the starting page of the freed
   // memory (via the start_page value on the chunk). Then, create a new node
@@ -276,28 +269,17 @@ void MemoryAllocator::kill_program(std::string program_name) {
   while (free_current != NULL) {
     int current_start_page = free_current->get_value().start_page;
     if (current_start_page > freed.start_page) {
-
-      printf("new_node addr: %p\n", (void*) new_node);
-
-      free_mem.apply(print_bounds);
-
       new_node->set_next(free_current);
       if (free_last == NULL) {
         free_mem.set_head(new_node);
       } else {
         free_last->set_next(new_node);
       }
-
-      printf("after updating shit:\n\n");
-      free_mem.apply(print_bounds);
-      printf("\n\n");
-
       defragment();
       printf("%s deleted. %d page(s) freed\n", program_name.c_str(), 
         freed_end_page - freed_start_page + 1);
       return;
     } else {
-      printf("hurr3\n");
       free_last = free_current;
       free_current = free_current->get_next();
     }
