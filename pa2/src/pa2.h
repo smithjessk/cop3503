@@ -96,6 +96,9 @@ class MemoryAllocator {
    */
   void kill_program(std::string program_name);
 
+  /** Defragments the used_mem list */
+  void defragment();
+
   /**
    * Print the number of fragments. A fragment is defined a chunk of 
    * contiguous memory; hence, the number of fragments is the number of nodes
