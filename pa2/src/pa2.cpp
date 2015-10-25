@@ -204,12 +204,13 @@ void MemoryAllocator::add_program(ProgramInfo prog_info) {
 }
 
 void MemoryAllocator::defragment() {
+  /*printf("Printing memory inside defragment\n");
   printf("Free memory map:\n");
   free_mem.apply(print_bounds);
   printf("\nUsed memory map:\n");
-  used_mem.apply(print_bounds);
+  used_mem.apply(print_bounds);*/
 
-  // Entering memory seems to be OK
+  // Entering memory seems to be OK. NOT REALLY! THE USED IS EMPTY!!
 
   Node<Chunk> *current = free_mem.get_head(),
     *last = NULL;
@@ -239,18 +240,26 @@ void MemoryAllocator::kill_program(std::string program_name) {
   int freed_start_page, freed_end_page;
   bool program_found = false;
   Node<UsedMemoryChunk> *used_current = used_mem.get_head();
-  Node<UsedMemoryChunk> *last = NULL;
+  Node<UsedMemoryChunk> *used_last = NULL;
+
+
+  /*printf("Printing the used memory before I even try to do anyting\n");
+  used_mem.apply(print_bounds);
+  printf("\n");*/
+
   while (used_current != NULL && !program_found) {
     UsedMemoryChunk current_chunk = used_current->get_value();
     if (program_name.compare(current_chunk.program_name) == 0) {
       freed_start_page = current_chunk.start_page;
       freed_end_page = current_chunk.end_page;
-      if (last != NULL) {
-        last->set_next(used_current->get_next());
+      if (used_last != NULL) {
+        used_last->set_next(used_current->get_next());
+      } else {
+        used_mem.set_head(used_current->get_next());
       }
       program_found = true;
     } else {
-      last = used_current;
+      used_last = used_current;
       used_current = used_current->get_next();
     }
   }
@@ -284,7 +293,7 @@ void MemoryAllocator::kill_program(std::string program_name) {
         free_last->set_next(new_node);
       }
       defragment();
-      printf("%s deleted. %d page(s) freed\n", program_name.c_str(), 
+      printf("%s deleted. %d page(s) freed\n\n", program_name.c_str(), 
         freed_end_page - freed_start_page + 1);
       return;
     } else {
