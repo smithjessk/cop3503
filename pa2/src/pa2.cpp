@@ -161,48 +161,69 @@ void MemoryAllocator::add_program(ProgramInfo prog_info) {
   }
 
   Node<UsedMemoryChunk> *new_node = NULL;
+  Node<Chunk> *node_to_use = NULL;
   if (this->algorithm == "best") {
     std::pair<Node<Chunk>*, int> min = 
       *std::min_element(free_slots.begin(), free_slots.end(), CompareSecond());
-    Chunk smallestChunk = min.first->get_value();
-    // It's possible that sc.start_page + num_pages > sc.end_page. In this 
-    // case, we do not want to include it in the free memory list because it
-    // is a chunk that makes no sense. 
-    // Hence, we will not include this chunk. 
-    if (smallestChunk.start_page + num_pages > smallestChunk.end_page) {
-      if (free_mem.get_head() == min.first) {
-        free_mem.set_head(NULL);
-      } else {
-        bool previous_node_found = false;
-        current = free_mem.get_head()->get_next();
-        while (current != NULL && !previous_node_found) {
-          if (current->get_next() == min.first) {
-            current->set_next(min.first->get_next());
-            previous_node_found = true;
-          } else {
-            current = current->get_next();
-          }
+    node_to_use = min.first;
+  } else { // Worst fit
+    std::pair<Node<Chunk>*, int> max = 
+      *std::max_element(free_slots.begin(), free_slots.end(), CompareSecond());
+    node_to_use = max.first;
+  }
+  
+  // It's possible that
+  // chunk_to_use.start_page + num_pages > chunk_to_use.end_page
+  // In this case, we do not want to include it in the free memory list 
+  // because it is a chunk that makes no sense. 
+  // Hence, we will not include this chunk. 
+  Chunk chunk_to_use = node_to_use->get_value();
+  if (chunk_to_use.start_page + num_pages > chunk_to_use.end_page) {
+    if (free_mem.get_head() == node_to_use) {
+      free_mem.set_head(node_to_use->get_next());
+    } else {
+      bool previous_node_found = false;
+      current = free_mem.get_head()->get_next();
+      while (current != NULL && !previous_node_found) {
+        if (current->get_next() == node_to_use) {
+          current->set_next(node_to_use->get_next());
+          previous_node_found = true;
+        } else {
+          current = current->get_next();
         }
       }
-    } else {
-      min.first->set_value(Chunk(smallestChunk.start_page + num_pages, 
-        smallestChunk.end_page));  
     }
-    int chunk_start = smallestChunk.start_page,
-      chunk_end = smallestChunk.start_page + num_pages - 1;
-    new_node = new Node<UsedMemoryChunk>(UsedMemoryChunk(chunk_start, chunk_end, prog_info.name));
   } else {
-    // Do something similar
+    node_to_use->set_value(Chunk(chunk_to_use.start_page + num_pages, 
+      chunk_to_use.end_page));  
   }
 
+  std::printf("\nprinting free\n");
+  free_mem.apply(print_bounds);
+  std::printf("\n");
+
+  int chunk_start = chunk_to_use.start_page,
+    chunk_end = chunk_to_use.start_page + num_pages - 1;
+  new_node = new Node<UsedMemoryChunk>(UsedMemoryChunk(chunk_start, chunk_end, prog_info.name));
+
   // Put an entry in the used
+  
   Node<UsedMemoryChunk>* used_current = used_mem.get_head();
   Node<UsedMemoryChunk>* used_last = used_mem.get_head();
+  if (used_current != NULL && 
+    used_current->get_value().start_page > new_node->get_value().start_page) { // or .end_page?
+    new_node->set_next(used_mem.get_head());
+    used_mem.set_head(new_node);
+    printf("Program %s added successfully: %d page(s) used\n\n", 
+        prog_info.name.c_str(), num_pages);
+    return;
+  }
+
   while (used_current != NULL) {
     // Keep going until you pass the starting page of the allocated memory
     if (used_current->get_value().start_page > 
       new_node->get_value().start_page) {
-      used_last->set_next(new_node);
+      used_last->set_next(new_node);  
       new_node->set_next(used_current);
       printf("Program %s added successfully: %d page(s) used\n\n", 
         prog_info.name.c_str(), num_pages);
@@ -330,6 +351,12 @@ void MemoryAllocator::print_fragmentation() {
 }
 
 void MemoryAllocator::print_memory() {
+  printf("Free memory map:\n");
+  free_mem.apply(print_bounds);    
+  printf("\nUsed memory map:\n");    
+  used_mem.apply(print_bounds);
+  std::printf("\n");
+
   std::map<int, std::string> used_pages; // Page index to program name
   Node<UsedMemoryChunk> *current = used_mem.get_head();
   while (current != NULL) {
