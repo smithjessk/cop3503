@@ -204,6 +204,13 @@ void MemoryAllocator::add_program(ProgramInfo prog_info) {
 }
 
 void MemoryAllocator::defragment() {
+  printf("Free memory map:\n");
+  free_mem.apply(print_bounds);
+  printf("\nUsed memory map:\n");
+  used_mem.apply(print_bounds);
+
+  // Entering memory seems to be OK
+
   Node<Chunk> *current = free_mem.get_head(),
     *last = NULL;
   while (current != NULL) {
@@ -215,7 +222,8 @@ void MemoryAllocator::defragment() {
       int last_end = last->get_value().end_page,
       current_start = current->get_value().start_page;  
       if (last_end + 1 == current_start) {
-        Chunk expanded(last_end, current->get_value().end_page);
+        Chunk expanded(last->get_value().start_page, 
+          current->get_value().end_page);
         last->set_value(expanded);
         last->set_next(current->get_next());
         return;
