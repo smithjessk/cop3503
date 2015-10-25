@@ -7,8 +7,6 @@
 
 #include "pa2.h"
 
-// Node methods
-
 template <class T>
 Node<T>::Node(T inputted_value):
   value(inputted_value),
@@ -35,8 +33,6 @@ Node<T> *Node<T>::set_next(Node<T> *node) {
   next = node;
   return next;
 }
-
-// LinkedList methods
 
 template <class T>
 LinkedList<T>::LinkedList():
@@ -80,15 +76,14 @@ void LinkedList<T>::print() {
 template <class T>
 void LinkedList<T>::delete_node(int index) {
   if (index < 0) {
-    std::cout << "Cannot delete at indices less than zero" << std::endl;
+    std::printf("Cannot delete at indices less than zero\n");
     return; 
   }
   Node<T> *current = get_head();
   int numJumps = index;
   while (numJumps > 0) {
     if (current->get_next() == NULL) {
-      std::cout << "Cannot delete at indices longer than the list" << 
-        std::endl;
+      std::printf("Cannot delete at indices longer than the list\n");
       return;
     }
     current = current->get_next();
@@ -106,7 +101,6 @@ void LinkedList<T>::apply(void (*func)(Node<T>*)) {
     current = current->get_next();
   }
 }
-
 
 void print_bounds(Node<Chunk> *current) {
   Chunk info = current->get_value();
@@ -144,7 +138,7 @@ struct CompareSecond
 
 void MemoryAllocator::add_program(ProgramInfo prog_info) {
   if (prog_info.size <= 0) {
-    std::cout << "Not a valid size" << std::endl;
+    std::printf("Not a valid size\n");
     return;
   }
 
@@ -162,7 +156,7 @@ void MemoryAllocator::add_program(ProgramInfo prog_info) {
   }
 
   if (free_slots.size() == 0){
-    std::cout << "Not enough memory" << std::endl;
+    std::printf("Not enough memory\n");
     return;
   }
 
@@ -264,9 +258,9 @@ void MemoryAllocator::kill_program(std::string program_name) {
   Node<UsedMemoryChunk> *used_last = NULL;
 
 
-  /*printf("Printing the used memory before I even try to do anyting\n");
+  printf("Printing the used memory before I even try to do anyting\n");
   used_mem.apply(print_bounds);
-  printf("\n");*/
+  printf("\n");
 
   while (used_current != NULL && !program_found) {
     UsedMemoryChunk current_chunk = used_current->get_value();
@@ -285,6 +279,10 @@ void MemoryAllocator::kill_program(std::string program_name) {
     }
   }
 
+  printf("Printing the used memory after dropping it from used\n");
+  used_mem.apply(print_bounds);
+  printf("\n");
+
   if (!program_found) {
     printf("Could not find program with name %s\n", program_name.c_str());
     return;
@@ -294,8 +292,11 @@ void MemoryAllocator::kill_program(std::string program_name) {
     used_current->get_value().end_page);
   Node<Chunk> *new_node = new Node<Chunk>(freed);
 
-  if (used_mem.get_head() == used_current) {
-    used_mem.set_head(NULL);
+  if (free_mem.get_head() == NULL) {
+    free_mem.set_head(new_node);
+    std::printf("%s deleted. %d page(s) freed\n\n", program_name.c_str(), 
+      freed_end_page - freed_start_page + 1);
+    return;
   }
 
   // Keep going over free_mem until you pass the starting page of the freed
@@ -323,7 +324,7 @@ void MemoryAllocator::kill_program(std::string program_name) {
     }
   }
 
-  printf("Something went wrong.. maybe?\n");
+  printf("Something went wrong...?\n");
 }
 
 void MemoryAllocator::print_fragmentation() {
@@ -354,14 +355,14 @@ void MemoryAllocator::print_memory() {
     for (int col = 0; col < 8; col++) {
       int curr_page = row * 8 + col;
       if (used_pages.find(curr_page) != used_pages.end()) {
-        std::cout << used_pages[curr_page] << " ";
+        std::printf("%s ", used_pages[curr_page].c_str());
       } else {
-        std::cout << "Free ";
+        std::printf("Free ");
       }
     }
-    std::cout << std::endl;
+    std::printf("\n");
   }
-  std::cout << std::endl;
+  std::printf("\n");
 }
 
 void print_instructions() {
@@ -375,15 +376,15 @@ void print_instructions() {
 
 int get_choice() {
   int choice;
-  std::cout << "Choice - ";
+  std::printf("Choice - ");
   std::cin >> choice;
-  std::cout << std::endl;
+  std::printf("\n");
   return choice;
 }
 
 std::string get_program_name() {
   std::string name;
-  std::cout << "Program name - ";
+  std::printf("Program name - ");
   std::cin >> name;
   return name;
 }
@@ -391,7 +392,7 @@ std::string get_program_name() {
 ProgramInfo get_program_info() {
   std::string name = get_program_name();
   int size;
-  std::cout << "Program size (KB) - ";
+  std::printf("Program size (KB) - ");
   std::cin >> size;
   return ProgramInfo(name, size);
 }
@@ -418,7 +419,7 @@ int run_loop(std::string algorithm) {
       case 5: // Will exit next time
         break;
       default:
-        std::cout << "Unknown option " << std::endl;
+        std::printf("Unknown option\n");
         return 0;
     }
   }

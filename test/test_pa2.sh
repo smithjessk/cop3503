@@ -5,15 +5,11 @@ cd ../
 make pa2
 pa2/bin/pa2 best <<EOF
 1
-A
-1
-
-1
-B
-1
+a
+128
 
 2
-A
+a
 
 4
 EOF
