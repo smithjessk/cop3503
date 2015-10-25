@@ -171,6 +171,14 @@ void MemoryAllocator::add_program(ProgramInfo prog_info) {
     std::pair<Node<Chunk>*, int> min = 
       *std::min_element(free_slots.begin(), free_slots.end(), CompareSecond());
     Chunk smallestChunk = min.first->get_value();
+    // It's possible that sc.start_page + num_pages > sc.end_page. In this 
+    // case, we do not want to include it in the free memory list because it
+    // is a chunk that makes no sense. 
+    // Hence, we will iterate over the free memory list and remove all such 
+    // chunks. This move could be optimized by only checking places in which 
+    // we change something, but, from an implementation perspective, it is 
+    // easier to just check the whole thing.
+    // Besides, both algs are O(n) in the number of nodes in the list.
     min.first->set_value(Chunk(smallestChunk.start_page + num_pages, 
       smallestChunk.end_page));
     int chunk_start = smallestChunk.start_page,
@@ -289,7 +297,7 @@ void MemoryAllocator::kill_program(std::string program_name) {
       new_node->set_next(free_current);
       if (free_last == NULL) {
         free_mem.set_head(new_node);
-      } else {
+      } else { 
         free_last->set_next(new_node);
       }
       defragment();
