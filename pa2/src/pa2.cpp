@@ -116,7 +116,6 @@ void print_bounds(Node<UsedMemoryChunk> *current) {
   printf("Next addr: %p\n", (void *)current->get_next());
 }
 
-// MemoryAllocator methods
 MemoryAllocator::MemoryAllocator(std::string algorithm) {
   this->algorithm = algorithm;
   printf("Using %s fit algorithm\n", algorithm.c_str());
@@ -140,6 +139,17 @@ void MemoryAllocator::add_program(ProgramInfo prog_info) {
   if (prog_info.size <= 0) {
     std::printf("Not a valid size\n");
     return;
+  }
+
+  // Check that the name of the program and make sure it isn't already in use
+  Node<UsedMemoryChunk> *used_current = used_mem.get_head();
+  while (used_current != NULL) {
+    if (used_current->get_value().program_name == prog_info.name) {
+      std::printf("%s is already running\n", prog_info.name.c_str());
+      return;
+    } else {
+      used_current = used_current->get_next();
+    }
   }
 
   std::map<Node<Chunk>*, int> free_slots;
@@ -204,7 +214,7 @@ void MemoryAllocator::add_program(ProgramInfo prog_info) {
 
   // Put an entry in the used
   
-  Node<UsedMemoryChunk>* used_current = used_mem.get_head();
+  used_current = used_mem.get_head();
   Node<UsedMemoryChunk>* used_last = used_mem.get_head();
   if (used_current != NULL && 
     used_current->get_value().start_page > new_node->get_value().start_page) { // or .end_page?
