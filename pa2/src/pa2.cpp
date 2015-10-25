@@ -174,13 +174,26 @@ void MemoryAllocator::add_program(ProgramInfo prog_info) {
     // It's possible that sc.start_page + num_pages > sc.end_page. In this 
     // case, we do not want to include it in the free memory list because it
     // is a chunk that makes no sense. 
-    // Hence, we will iterate over the free memory list and remove all such 
-    // chunks. This move could be optimized by only checking places in which 
-    // we change something, but, from an implementation perspective, it is 
-    // easier to just check the whole thing.
-    // Besides, both algs are O(n) in the number of nodes in the list.
-    min.first->set_value(Chunk(smallestChunk.start_page + num_pages, 
-      smallestChunk.end_page));
+    // Hence, we will not include this chunk. 
+    if (smallestChunk.start_page + num_pages > smallestChunk.end_page) {
+      if (free_mem.get_head() == min.first) {
+        free_mem.set_head(NULL);
+      } else {
+        bool previous_node_found = false;
+        current = free_mem.get_head()->get_next();
+        while (current != NULL && !previous_node_found) {
+          if (current->get_next() == min.first) {
+            current->set_next(min.first->get_next());
+            previous_node_found = true;
+          } else {
+            current = current->get_next();
+          }
+        }
+      }
+    } else {
+      min.first->set_value(Chunk(smallestChunk.start_page + num_pages, 
+        smallestChunk.end_page));  
+    }
     int chunk_start = smallestChunk.start_page,
       chunk_end = smallestChunk.start_page + num_pages - 1;
     new_node = new Node<UsedMemoryChunk>(UsedMemoryChunk(chunk_start, chunk_end, prog_info.name));
@@ -190,18 +203,18 @@ void MemoryAllocator::add_program(ProgramInfo prog_info) {
 
   // Put an entry in the used
   Node<UsedMemoryChunk>* used_current = used_mem.get_head();
-  Node<UsedMemoryChunk>* last = used_mem.get_head();
+  Node<UsedMemoryChunk>* used_last = used_mem.get_head();
   while (used_current != NULL) {
     // Keep going until you pass the starting page of the allocated memory
     if (used_current->get_value().start_page > 
       new_node->get_value().start_page) {
-      last->set_next(new_node);
+      used_last->set_next(new_node);
       new_node->set_next(used_current);
       printf("Program %s added successfully: %d page(s) used\n\n", 
         prog_info.name.c_str(), num_pages);
       return;
     } else {
-      last = used_current;
+      used_last = used_current;
       used_current = used_current->get_next();
     }
   }
