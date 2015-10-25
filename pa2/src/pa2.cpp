@@ -198,10 +198,6 @@ void MemoryAllocator::add_program(ProgramInfo prog_info) {
       chunk_to_use.end_page));  
   }
 
-  std::printf("\nprinting free\n");
-  free_mem.apply(print_bounds);
-  std::printf("\n");
-
   int chunk_start = chunk_to_use.start_page,
     chunk_end = chunk_to_use.start_page + num_pages - 1;
   new_node = new Node<UsedMemoryChunk>(UsedMemoryChunk(chunk_start, chunk_end, prog_info.name));
@@ -270,11 +266,6 @@ void MemoryAllocator::kill_program(std::string program_name) {
   Node<UsedMemoryChunk> *used_current = used_mem.get_head();
   Node<UsedMemoryChunk> *used_last = NULL;
 
-
-  printf("Printing the used memory before I even try to do anyting\n");
-  used_mem.apply(print_bounds);
-  printf("\n");
-
   while (used_current != NULL && !program_found) {
     UsedMemoryChunk current_chunk = used_current->get_value();
     if (program_name.compare(current_chunk.program_name) == 0) {
@@ -291,10 +282,6 @@ void MemoryAllocator::kill_program(std::string program_name) {
       used_current = used_current->get_next();
     }
   }
-
-  printf("Printing the used memory after dropping it from used\n");
-  used_mem.apply(print_bounds);
-  printf("\n");
 
   if (!program_found) {
     printf("Could not find program with name %s\n", program_name.c_str());
@@ -351,12 +338,6 @@ void MemoryAllocator::print_fragmentation() {
 }
 
 void MemoryAllocator::print_memory() {
-  printf("Free memory map:\n");
-  free_mem.apply(print_bounds);    
-  printf("\nUsed memory map:\n");    
-  used_mem.apply(print_bounds);
-  std::printf("\n");
-
   std::map<int, std::string> used_pages; // Page index to program name
   Node<UsedMemoryChunk> *current = used_mem.get_head();
   while (current != NULL) {
