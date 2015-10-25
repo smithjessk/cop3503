@@ -219,14 +219,6 @@ void MemoryAllocator::add_program(ProgramInfo prog_info) {
 }
 
 void MemoryAllocator::defragment() {
-  /*printf("Printing memory inside defragment\n");
-  printf("Free memory map:\n");
-  free_mem.apply(print_bounds);
-  printf("\nUsed memory map:\n");
-  used_mem.apply(print_bounds);*/
-
-  // Entering memory seems to be OK. NOT REALLY! THE USED IS EMPTY!!
-
   Node<Chunk> *current = free_mem.get_head(),
     *last = NULL;
   while (current != NULL) {
@@ -334,20 +326,16 @@ void MemoryAllocator::print_fragmentation() {
     num_fragments++;
     current = current->get_next();
   }
-  printf("There are %d fragment(s)\n\n", num_fragments);
+  std::printf("There are %d fragment(s)\n\n", num_fragments);
 }
 
 void MemoryAllocator::print_memory() {
-  printf("Free memory map:\n");
-  free_mem.apply(print_bounds);
-  printf("\nUsed memory map:\n");
-  used_mem.apply(print_bounds);
-  std::map<int, std::string> used_pages; // Page to program name
+  std::map<int, std::string> used_pages; // Page index to program name
   Node<UsedMemoryChunk> *current = used_mem.get_head();
   while (current != NULL) {
-    Chunk info = current->get_value();
+    UsedMemoryChunk info = current->get_value();
     for (int i = info.start_page; i <= info.end_page; i++) {
-      used_pages[i] = "Occupado";
+      used_pages[i] = info.program_name;
     }
     current = current->get_next();
   }
@@ -416,7 +404,7 @@ int run_loop(std::string algorithm) {
       case 4:
         mem_alloc.print_memory();
         break;
-      case 5: // Will exit next time
+      case 5:
         break;
       default:
         std::printf("Unknown option\n");
