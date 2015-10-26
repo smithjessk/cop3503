@@ -65,7 +65,7 @@ Node<T> *LinkedList<T>::append(T value) {
 
 MemoryAllocator::MemoryAllocator(std::string algorithm) {
   this->algorithm = algorithm;
-  printf("Using %s fit algorithm\n", algorithm.c_str());
+  std::printf("Using %s fit algorithm\n", algorithm.c_str());
   this->free_mem = LinkedList<Chunk>();
   free_mem.append(Chunk(0, 31));
   this->used_mem = LinkedList<UsedMemoryChunk>();
@@ -165,7 +165,7 @@ void MemoryAllocator::add_program(ProgramInfo prog_info) {
     used_current->get_value().start_page > new_node->get_value().start_page) {
     new_node->set_next(used_mem.get_head());
     used_mem.set_head(new_node);
-    printf("Program %s added successfully: %d page(s) used\n\n", 
+    std::printf("Program %s added successfully: %d page(s) used\n\n", 
         prog_info.name.c_str(), num_pages);
     return;
   }
@@ -176,7 +176,7 @@ void MemoryAllocator::add_program(ProgramInfo prog_info) {
       new_node->get_value().start_page) {
       used_last->set_next(new_node);  
       new_node->set_next(used_current);
-      printf("Program %s added successfully: %d page(s) used\n\n", 
+      std::printf("Program %s added successfully: %d page(s) used\n\n", 
         prog_info.name.c_str(), num_pages);
       return;
     } else {
@@ -186,7 +186,7 @@ void MemoryAllocator::add_program(ProgramInfo prog_info) {
   }
   // In case we need to append at the end
   used_mem.append(new_node->get_value());
-  printf("Program %s added successfully: %d page(s) used\n\n", 
+  std::printf("Program %s added successfully: %d page(s) used\n\n", 
     prog_info.name.c_str(), num_pages);
 }
 
@@ -239,7 +239,7 @@ void MemoryAllocator::kill_program(std::string program_name) {
   }
 
   if (!program_found) {
-    printf("Could not find program with name %s\n", program_name.c_str());
+    std::printf("Could not find program with name %s\n", program_name.c_str());
     return;
   }
 
@@ -270,7 +270,7 @@ void MemoryAllocator::kill_program(std::string program_name) {
         free_last->set_next(new_node);
       }
       defragment();
-      printf("%s deleted. %d page(s) freed\n\n", program_name.c_str(), 
+      std::printf("%s deleted. %d page(s) freed\n\n", program_name.c_str(), 
         freed_end_page - freed_start_page + 1);
       return;
     } else {
@@ -382,7 +382,7 @@ int main(int argc, char** argv) {
       return run_loop(algorithm);
     }
   }
-  printf("First argument must be the algorithm to use (namely, ");
-  printf("\"best\" or \"worst\")\n");
+  std::printf("First argument must be the algorithm to use (namely, ");
+  std::printf("\"best\" or \"worst\")\n");
   return 0;
 }
