@@ -18,8 +18,8 @@ T Node<T>::get_value() {
 }
 
 template <class T>
-T Node<T>::set_value(T value) {
-  this->value = value;
+T Node<T>::set_value(T passed) {
+  value = passed;
   return value;
 }
 
@@ -63,12 +63,12 @@ Node<T> *LinkedList<T>::append(T value) {
   return temp->get_next();
 }
 
-MemoryAllocator::MemoryAllocator(std::string algorithm) {
-  this->algorithm = algorithm;
+MemoryAllocator::MemoryAllocator(std::string passed_alg, int num_pages) {
+  algorithm = passed_alg;
   std::printf("Using %s fit algorithm\n", algorithm.c_str());
-  this->free_mem = LinkedList<Chunk>();
-  free_mem.append(Chunk(0, 31));
-  this->used_mem = LinkedList<UsedMemoryChunk>();
+  free_mem = LinkedList<Chunk>();
+  free_mem.append(Chunk(0, num_pages - 1));
+  used_mem = LinkedList<UsedMemoryChunk>();
 
 }
 
@@ -81,7 +81,10 @@ struct CompareSecond
     }
 };
 
-
+// Validate the passed name and size based on the nodes that are currently in
+// use. Then, determine where to insert it based on either the "best" or 
+// "worst" fit algorithms. Finally, determine where to create a new node in 
+// the used list based on the start and end pages of the new node.
 void MemoryAllocator::add_program(ProgramInfo prog_info) {
   if (prog_info.size <= 0) {
     std::printf("Not a valid size\n");
@@ -119,6 +122,7 @@ void MemoryAllocator::add_program(ProgramInfo prog_info) {
 
   Node<UsedMemoryChunk> *new_node = NULL;
   Node<Chunk> *node_to_use = NULL;
+
   if (this->algorithm == "best") {
     std::pair<Node<Chunk>*, int> min = 
       *std::min_element(free_slots.begin(), free_slots.end(), CompareSecond());
@@ -133,7 +137,6 @@ void MemoryAllocator::add_program(ProgramInfo prog_info) {
   // chunk_to_use.start_page + num_pages > chunk_to_use.end_page
   // In this case, we do not want to include it in the free memory list 
   // because it is a chunk that makes no sense. 
-  // Hence, we will not include this chunk. 
   Chunk chunk_to_use = node_to_use->get_value();
   if (chunk_to_use.start_page + num_pages > chunk_to_use.end_page) {
     if (free_mem.get_head() == node_to_use) {
@@ -161,6 +164,8 @@ void MemoryAllocator::add_program(ProgramInfo prog_info) {
   
   used_current = used_mem.get_head();
   Node<UsedMemoryChunk>* used_last = used_mem.get_head();
+
+  // If we're putting it at the head
   if (used_current != NULL && 
     used_current->get_value().start_page > new_node->get_value().start_page) {
     new_node->set_next(used_mem.get_head());
@@ -170,8 +175,10 @@ void MemoryAllocator::add_program(ProgramInfo prog_info) {
     return;
   }
 
-  while (used_current != NULL) {
-    // Keep going until you pass the starting page of the allocated memory
+
+  // If we're putting it somewhere in the middle 
+  // Keep going until you pass the starting page of the allocated memory
+  while (used_current != NULL) {    
     if (used_current->get_value().start_page > 
       new_node->get_value().start_page) {
       used_last->set_next(new_node);  
@@ -184,6 +191,7 @@ void MemoryAllocator::add_program(ProgramInfo prog_info) {
       used_current = used_current->get_next();
     }
   }
+
   // In case we need to append at the end
   used_mem.append(new_node->get_value());
   std::printf("Program %s added successfully: %d page(s) used\n\n", 
@@ -194,7 +202,6 @@ void MemoryAllocator::defragment() {
   Node<Chunk> *current = free_mem.get_head(),
     *last = NULL;
   while (current != NULL) {
-    // Collapse to the left by seeing if prev.end_page + 1 = curr.start_page,
     if (last == NULL) {
       last = current;
       current = current->get_next();
@@ -215,6 +222,8 @@ void MemoryAllocator::defragment() {
   }
 }
 
+// If the program name does not exist, calmly exit. Otherwise, delete the node
+// from used and appropriately add a new one to new. 
 void MemoryAllocator::kill_program(std::string program_name) {
   int freed_start_page, freed_end_page;
   bool program_found = false;
@@ -347,7 +356,7 @@ ProgramInfo get_program_info() {
 }
 
 int run_loop(std::string algorithm) {
-  MemoryAllocator mem_alloc(algorithm);
+  MemoryAllocator mem_alloc(algorithm, 32);
   print_instructions();
   int action_choice = -1;
   while (action_choice != 5) {

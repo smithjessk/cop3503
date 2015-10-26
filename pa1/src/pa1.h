@@ -46,7 +46,7 @@ class MagicSquare {
   /**
    * Calculate the sum of the grid entries along the main "upper-right"
    * diagonal. That is, the entries (length - 1, 0), (length - 2, 1), and so 
-   * on until (0, length - 1). Note that (i, j) correspo nds to the i-th row
+   * on until (0, length - 1). Note that (i, j) corresponds to the i-th row
    * and j-th column.
    */
   int rightDiagSum();
