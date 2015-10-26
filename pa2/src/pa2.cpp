@@ -63,59 +63,6 @@ Node<T> *LinkedList<T>::append(T value) {
   return temp->get_next();
 }
 
-template <class T>
-void LinkedList<T>::print() {
-  Node<T> *current = get_head();
-  std::cout << "Printing..." << std::endl;
-  while (current != NULL) {
-    std::cout << current->get_value() << std::endl;
-    current = current->get_next();
-  }
-}
-
-template <class T>
-void LinkedList<T>::delete_node(int index) {
-  if (index < 0) {
-    std::printf("Cannot delete at indices less than zero\n");
-    return; 
-  }
-  Node<T> *current = get_head();
-  int numJumps = index;
-  while (numJumps > 0) {
-    if (current->get_next() == NULL) {
-      std::printf("Cannot delete at indices longer than the list\n");
-      return;
-    }
-    current = current->get_next();
-    numJumps--;
-  }
-  delete *current;
-  return;
-}
-
-template <class T>
-void LinkedList<T>::apply(void (*func)(Node<T>*)) {
-  Node<T> *current = get_head();
-  while (current != NULL) {
-    (*func)(current);
-    current = current->get_next();
-  }
-}
-
-void print_bounds(Node<Chunk> *current) {
-  Chunk info = current->get_value();
-  printf("Start: %d, End: %d\n", info.start_page, info.end_page);
-  printf("This addr: %p\n", (void *)current);
-  printf("Next addr: %p\n", (void *)current->get_next());
-}
-
-void print_bounds(Node<UsedMemoryChunk> *current) {
-  UsedMemoryChunk info = current->get_value();
-  printf("Start: %d, End: %d\n", info.start_page, info.end_page);
-  printf("This addr: %p\n", (void *)current);
-  printf("Next addr: %p\n", (void *)current->get_next());
-}
-
 MemoryAllocator::MemoryAllocator(std::string algorithm) {
   this->algorithm = algorithm;
   printf("Using %s fit algorithm\n", algorithm.c_str());
@@ -211,13 +158,11 @@ void MemoryAllocator::add_program(ProgramInfo prog_info) {
   int chunk_start = chunk_to_use.start_page,
     chunk_end = chunk_to_use.start_page + num_pages - 1;
   new_node = new Node<UsedMemoryChunk>(UsedMemoryChunk(chunk_start, chunk_end, prog_info.name));
-
-  // Put an entry in the used
   
   used_current = used_mem.get_head();
   Node<UsedMemoryChunk>* used_last = used_mem.get_head();
   if (used_current != NULL && 
-    used_current->get_value().start_page > new_node->get_value().start_page) { // or .end_page?
+    used_current->get_value().start_page > new_node->get_value().start_page) {
     new_node->set_next(used_mem.get_head());
     used_mem.set_head(new_node);
     printf("Program %s added successfully: %d page(s) used\n\n", 
@@ -333,8 +278,6 @@ void MemoryAllocator::kill_program(std::string program_name) {
       free_current = free_current->get_next();
     }
   }
-
-  printf("Something went wrong...?\n");
 }
 
 void MemoryAllocator::print_fragmentation() {

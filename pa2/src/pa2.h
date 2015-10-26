@@ -36,10 +36,6 @@ class LinkedList {
   Node<T> *get_head();
 
   Node<T> *append(T value);
-
-  void delete_node(int index);
-
-  void apply(void (*func)(Node<T> *));
 };
 
 struct ProgramInfo {
