@@ -55,7 +55,7 @@ struct ProgramInfo {
 
 // Represents a set of pages in memory.
 struct Chunk {
-  int start_page, end_page; // inclusive
+  int start_page, end_page; // Inclusive bounds
 
   Chunk(int start, int end) {
     start_page = start;

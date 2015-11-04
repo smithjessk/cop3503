@@ -2,7 +2,7 @@ CLANG = clang++
 GPP = g++
 CFLAGS = -Wall
 
-ASSIGNMENTS = pa1 pa2
+ASSIGNMENTS = pa1 pa2 pa3
 
 .PHONY: assignments $(ASSIGNMENTS)
 
