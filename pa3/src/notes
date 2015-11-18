@@ -39,7 +39,6 @@ STATEMENT
 *********
 
 %ident1% = %expr1%;
-%ident1%++;
 %ident1%;
 %expr1%;
 
@@ -47,8 +46,20 @@ STATEMENT
 EXPRESSION
 **********
 
-# list of binary operations joined by operators #;
+# list of operations joined by operators #;
 
+
+**********
+OPERATIONS
+**********
+%binop1%
+%selfop1%
+
+***************
+SELF OPERATIONS
+***************
+%ident1%++;
+%const1%++; // Maybe?
 
 *****************
 BINARY OPERATIONS

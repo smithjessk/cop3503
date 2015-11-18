@@ -1,7 +1,9 @@
 #ifndef PA3_HEADER
 #define PA3_HEADER
 
-template <class T>
+#include <string>
+
+template <typename T>
 class Node {
  private:
   T value;
@@ -13,7 +15,7 @@ class Node {
   Node<T> *get_previous();
 };
 
-template <class T>
+template <typename T>
 class Stack {
  private:
   Node<T> *head;
@@ -22,6 +24,29 @@ class Stack {
   Stack(T value);
   Node<T> *push(T value);
   Node<T> *pop();
+};
+
+struct Operator {
+  std::string symbol;
+};
+
+struct BinaryOperator : Operator {};
+
+struct SelfOperator : Operator {};
+
+struct Operation {};
+
+template <typename T>
+struct SelfOperation : Operator {
+  T self;
+  SelfOperator op;
+};
+
+template <typename T, typename U>
+struct BinaryOperation : Operator {
+  T left;
+  U right;
+  BinaryOperator op;
 };
 
 #endif // PA3_HEADER
