@@ -1,2 +1,60 @@
 make a class for each token type 
-insert a new space (if nesc) after each semicolon
+insert a new line (if nesc) after each semicolon
+
+identififer: some sequence of lowercase letters
+constant: some sequence of numbers
+keyword: 
+	FOR 
+	BEGIN 
+	END
+operator: 
+	+ 
+	- 
+	* 
+	/ 
+	++ 
+	=
+delimiter:
+	,
+	;
+
+
+Syntax errors can be present because of tokens that should be there and aren't
+or vice-versa.
+
+A %codeblock can be either a FOR loop or a sequence of statements. It appears
+that sequences of statements are separated by linebreaks and semicolons.
+
+**************
+FOR STATEMENT:
+**************
+
+FOR (%ident1%, %constant1%, %operator1%)
+BEGIN 
+	%codeblock1%
+END
+
+*********
+STATEMENT
+*********
+
+%ident1% = %expr1%;
+%ident1%++;
+%ident1%;
+%expr1%;
+
+**********
+EXPRESSION
+**********
+
+# list of binary operations joined by operators #;
+
+
+*****************
+BINARY OPERATIONS
+*****************
+
+%ident1% %operator1% %ident2%;
+%ident1% %operator1% %const1%;
+%const1% %operator1% %ident1%;
+%const1% %operator1% %const2%;
