@@ -1,12 +1,12 @@
 #include <cstdio>
+#include <iostream>
 
 #include "pa3.h"
 
 template <class T>
-Node<T>::Node(T value, Node<T> *previous) {
-  this->value = value;
-  this->previous = previous;
-}
+Node<T>::Node(T value, Node<T> *previous):
+  value(value),
+  previous(previous) {}
 
 template<class T>
 T Node<T>::get_value() {
@@ -40,19 +40,37 @@ Node<T> *Stack<T>::pop() {
   return old_head;
 }
 
+bool is_numeric(char c) {
+  return 48 <= (int)(c) && (int)(c) <= 57;
+}
+
+Token begin("");
+Token end("");
+
+Stack<Token> parse_line(std::string to_parse, Stack<Token> tokens) {
+  if (to_parse.size() == 0) {
+    return tokens;
+  }
+  if (is_numeric(to_parse[0])) {
+    std::string text(1, to_parse[0]);
+    to_parse = to_parse.substr(1);
+    while (to_parse.size() > 0 && is_numeric(to_parse[0])) {
+      text = text + to_parse[0];
+      to_parse = to_parse.substr(1);
+    }
+    tokens.push(Constant(text));
+    return parse_line(to_parse, tokens);
+  }
+  return tokens;
+}
+
 int main() {
-  Stack<int> s(1);
-  s.push(5);
-  s.push(4);
-  s.push(3);
-  s.push(2);
-  for (size_t i = 0; i < 3; i++) {
-    std::printf("popped: %d\n", s.pop()->get_value());
-  }
-  s.push(100);
-  s.push(101);
-  for (size_t i = 0; i < 4; i++) {
-    std::printf("popped: %d\n", s.pop()->get_value()); 
-  }
+  std::string to_parse = "123";
+  Stack<Token> tokens(begin);
+  tokens = parse_line(to_parse, tokens);
+  tokens.push(end);
+  std::cout << tokens.pop()->get_value().text << std::endl;
+  std::cout << tokens.pop()->get_value().text << std::endl;
+  std::cout << tokens.pop()->get_value().text << std::endl;
   return 0;
 }

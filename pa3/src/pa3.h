@@ -26,9 +26,19 @@ class Stack {
   Node<T> *pop();
 };
 
-struct Operator {
-  std::string symbol;
+// Base class
+struct Token {
+  std::string text;
+  Token(std::string in) {
+    text = in;
+  }
 };
+
+struct Constant : public Token {
+  Constant(std::string in): Token(in) {}
+};
+
+struct Operator : Token {};
 
 struct BinaryOperator : Operator {};
 
