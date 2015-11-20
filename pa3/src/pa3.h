@@ -21,7 +21,7 @@ class Stack {
   Node<T> *head;
  
  public:
-  Stack(T value);
+  Stack();
   Node<T> *push(T value);
   Node<T> *pop();
 };
