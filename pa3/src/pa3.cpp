@@ -72,6 +72,10 @@ bool is_keyword(std::string s) {
     equals_str(s, "END");
 }
 
+bool is_delimiter(char c) {
+  return c == '(' || c == ')' || c == ';' || c == ',';
+}
+
 void jump(std::string &s, int size) {
   s = s.substr(size);
 }
@@ -133,31 +137,41 @@ void handle_letter(std::string &to_parse, Stack<Token> &tokens) {
   }
 }
 
+void handle_delimiter(std::string &to_parse, Stack<Token> &tokens) {
+  char curr = to_parse[0];
+  std::string text(1, curr);
+  jump(to_parse, 1);
+  tokens.push(Delimiter(text));
+}
+
 Stack<Token> parse_line(std::string to_parse, Stack<Token> tokens) {
   if (to_parse.size() == 0) {
     return tokens;
   }
   char curr = to_parse[0];
-  if (is_numeric(curr)) {
+  if (is_numeric(curr)) { // Numbers
     handle_number(to_parse, tokens);
     return parse_line(to_parse, tokens);
-  } else if (is_operator(curr)) {
+  } else if (is_operator(curr)) { // Operators
     handle_operator(to_parse, tokens);
     return parse_line(to_parse, tokens);
-  } else if (is_letter(curr)) {
+  } else if (is_letter(curr)) { // Letters
     handle_letter(to_parse, tokens);
     return parse_line(to_parse, tokens);
-  } else if (is_space(curr)) {
+  } else if (is_delimiter(curr)) {
+    handle_delimiter(to_parse, tokens);
+    return parse_line(to_parse, tokens);
+  } else if (is_space(curr)) { // Spaces
     jump(to_parse, 1);
     return parse_line(to_parse, tokens);
   } else {
     std::cerr << "Encountered unknown token: " << curr << std::endl;
+    return parse_line(to_parse, tokens);
   }
-  return tokens;
 }
 
 int main() {
-  std::string to_parse = "1 + 2 - 5 * a";
+  std::string to_parse = "FOR (1, a, +)";
   Stack<Token> tokens;
   tokens = parse_line(to_parse, tokens);
   Node<Token> *token = tokens.pop();

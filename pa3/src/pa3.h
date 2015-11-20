@@ -49,6 +49,11 @@ struct Keyword : Token {
   Keyword(std::string in): Token(in) {}
 };
 
+// I.e., ( ) ; ,
+struct Delimiter : Token {
+  Delimiter(std::string in): Token(in) {}
+};
+
 // Both binary and self
 struct Operator : Token {
   Operator(std::string in): Token(in) {}
