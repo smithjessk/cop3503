@@ -26,6 +26,7 @@ class Stack {
   Node<T> *pop();
 };
 
+// Extended by all tokens
 struct Token {
   std::string text;
   Token(std::string in) {
@@ -33,10 +34,22 @@ struct Token {
   }
 };
 
+// E.g. a b cdef
+struct Identifier : Token {
+  Identifier(std::string in): Token(in) {}
+};
+
+// E.g. 1 2 345
 struct Constant : Token {
   Constant(std::string in): Token(in) {}
 };
 
+// I.e., FOR BEGIN END
+struct Keyword : Token {
+  Keyword(std::string in): Token(in) {}
+};
+
+// Both binary and self
 struct Operator : Token {
   Operator(std::string in): Token(in) {}
 };
