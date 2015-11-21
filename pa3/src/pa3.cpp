@@ -22,6 +22,17 @@ ProgramWalker::ProgramWalker() {
   this->num_ends = 0;
 }
 
+int ProgramWalker::compare_n_begins_ends() {
+  std::printf("b, e: %d, %d\n", num_begins, num_ends);
+  if (num_begins > num_ends) {
+    return -1;
+  }
+  if (num_begins < num_ends) {
+    return 1;
+  }
+  return 0;
+} 
+
 void ProgramWalker::add_line(LineWalker lw) {
   if (lw.is_for_declaration) {
     this->num_for_declarations++;
@@ -49,6 +60,11 @@ void ProgramWalker::add_line(LineWalker lw) {
       this->unexpected.insert(lw.tokens.at(i).text);
     }
   }
+}
+
+void ProgramWalker::insert_missing(std::string s) {
+  this->missing.insert(s);
+  std::cout << "added " << s << std::endl;
 }
 
 void ProgramWalker::print_loop_depth() {
@@ -115,10 +131,10 @@ void ProgramWalker::print_delimiters() {
 
 void ProgramWalker::print_syntax_errors() {
   std::printf("Syntax Errors: ");
-  for (std::set<Token>::iterator it = this->missing.begin(); 
+  for (std::set<std::string>::iterator it = this->missing.begin(); 
     it != this->missing.end(); ++it) {
-    Token curr = *it;
-    std::printf("%s ", curr.text.c_str());
+    std::string curr = *it;
+    std::printf("%s ", curr.c_str());
   }
   for (std::set<std::string>::iterator it = this->unexpected.begin(); 
     it != this->unexpected.end(); ++it) {
@@ -342,6 +358,9 @@ void parse_for_declaration(LineWalker &line_walker) {
   expect_comma(line_walker);
   expect_operator(line_walker);
   expect_right_paren(line_walker);
+
+  // Add any extra tokens into the unexpected set
+  
 }
 
 bool is_for_declaration(LineWalker &line_walker) {
@@ -396,7 +415,11 @@ void parse_program(ProgramWalker &pw, CodeBlock &program) {
   pw.print_operators();
   pw.print_delimiters();
   pw.print_syntax_errors();
-  // If the number of ends > number of starts, mark "BEGIN", "END" as missing
+  if (pw.compare_n_begins_ends() < 0) { // more begins than ends
+    pw.insert_missing("END");
+  } else if (pw.compare_n_begins_ends() > 0) { // more ends than begins
+    pw.insert_missing("BEGIN");
+  }
 }
 
 int main(int argc, char **argv) {

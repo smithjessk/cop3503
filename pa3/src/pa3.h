@@ -122,12 +122,14 @@ class ProgramWalker {
   std::set<std::string> operators;
   std::set<std::string> delimiters;
   std::set<std::string> unexpected;
-  std::set<Token> missing;
+  std::set<std::string> missing;
   // std::vector<Token> unexpected;
 
  public:
   ProgramWalker();
+  int compare_n_begins_ends();
   void add_line(LineWalker lw);
+  void insert_missing(std::string s);
   void print_loop_depth();
   void print_keywords();
   void print_identifiers();
