@@ -123,8 +123,12 @@ class ProgramWalker {
   ProgramWalker();
   void add_line(LineWalker lw);
   void print_loop_depth();
-  void print_syntax_errors();
   void print_keywords();
+  void print_identifiers();
+  void print_constants();
+  void print_operators();
+  void print_delimiters();
+  void print_syntax_errors();
 };
 
 #endif // PA3_HEADER

@@ -65,6 +65,62 @@ void ProgramWalker::print_keywords() {
   std::printf("\n");
 }
 
+void ProgramWalker::print_identifiers() {
+  std::printf("Identifiers: ");
+  for (std::set<std::string>::iterator it = this->identifiers.begin(); 
+    it != this->identifiers.end(); ++it) {
+    std::string curr = *it;
+    std::printf("%s ", curr.c_str());
+  }
+  std::printf("\n"); 
+}
+
+void ProgramWalker::print_constants() {
+  std::printf("Constants: ");
+  for (std::set<std::string>::iterator it = this->constants.begin(); 
+    it != this->constants.end(); ++it) {
+    std::string curr = *it;
+    std::printf("%s ", curr.c_str());
+  }
+  std::printf("\n"); 
+}
+
+void ProgramWalker::print_operators() {
+  std::printf("Operators: ");
+  for (std::set<std::string>::iterator it = this->operators.begin(); 
+    it != this->operators.end(); ++it) {
+    std::string curr = *it;
+    std::printf("%s ", curr.c_str());
+  }
+  std::printf("\n"); 
+}
+
+void ProgramWalker::print_delimiters() {
+  std::printf("Delimiters: ");
+  for (std::set<std::string>::iterator it = this->delimiters.begin(); 
+    it != this->delimiters.end(); ++it) {
+    std::string curr = *it;
+    std::printf("%s ", curr.c_str());
+  }
+  std::printf("\n"); 
+}
+
+
+void ProgramWalker::print_syntax_errors() {
+  std::printf("Syntax Errors: ");
+  for (std::vector<Token>::iterator it = this->missing.begin(); 
+    it != this->missing.end(); ++it) {
+    Token curr = *it;
+    std::printf("%s ", curr.text.c_str());
+  }
+  for (std::vector<Token>::iterator it = this->unexpected.begin(); 
+    it != this->unexpected.end(); ++it) {
+    Token curr = *it;
+    std::printf("%s ", curr.text.c_str());
+  }
+  std::printf("\n"); 
+}
+
 bool in_ascii_range(char c, int lower, int upper) {
   return lower <= (int)(c) && (int)(c) <= upper;
 }
@@ -312,7 +368,13 @@ void parse_program(ProgramWalker &pw, CodeBlock &program) {
     parse_line(lw);
     pw.add_line(lw);
   }
+  pw.print_loop_depth();
   pw.print_keywords();
+  pw.print_identifiers();
+  pw.print_constants();
+  pw.print_operators();
+  pw.print_delimiters();
+  pw.print_syntax_errors();
   // If the number of ends > number of starts, mark "BEGIN", "END" as missing
 }
 
