@@ -26,6 +26,11 @@ struct CodeBlock {
   }
 };
 
+// E.g. BEGAN
+struct Unexpected : Token {
+  Unexpected(std::string in): Token(in, "unexpected") {}
+};
+
 // E.g. a b cdef
 struct Identifier : Token {
   Identifier(std::string in): Token(in, "identifier") {}
@@ -91,7 +96,7 @@ struct BinaryOperation : Operator {
 struct LineWalker {
   std::vector<Token> tokens;
   std::vector<Token> missing;
-  std::vector<Token> unexpected;
+  // std::vector<Token> unexpected;
   int index;
   bool is_for_declaration;
   bool is_begin;
@@ -116,8 +121,9 @@ class ProgramWalker {
   std::set<std::string> constants;
   std::set<std::string> operators;
   std::set<std::string> delimiters;
-  std::vector<Token> missing;
-  std::vector<Token> unexpected;
+  std::set<std::string> unexpected;
+  std::set<Token> missing;
+  // std::vector<Token> unexpected;
 
  public:
   ProgramWalker();

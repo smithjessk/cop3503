@@ -34,7 +34,7 @@ void ProgramWalker::add_line(LineWalker lw) {
     this->keywords.insert("END");
   }
   this->max_loop_depth = std::max(this->max_loop_depth, 
-    this->num_for_declarations - this->num_ends); 
+    this->num_for_declarations - this->num_ends - 1); 
   for (size_t i = 0; i < lw.tokens.size(); i++) {
     if (type_is(lw.tokens, i, "identifier")) {
       this->identifiers.insert(lw.tokens.at(i).text);
@@ -43,6 +43,10 @@ void ProgramWalker::add_line(LineWalker lw) {
     } else if (type_is(lw.tokens, i, "binary_operator") || 
       type_is(lw.tokens, i, "self_operator")) {
       this->operators.insert(lw.tokens.at(i).text);
+    } else if (type_is(lw.tokens, i, "delimiter")) {
+      this->delimiters.insert(lw.tokens.at(i).text);
+    } else if (type_is(lw.tokens, i, "unexpected")) {
+      this->unexpected.insert(lw.tokens.at(i).text);
     }
   }
 }
@@ -95,12 +99,15 @@ void ProgramWalker::print_operators() {
   std::printf("\n"); 
 }
 
+// Do not print parentheses.
 void ProgramWalker::print_delimiters() {
   std::printf("Delimiters: ");
   for (std::set<std::string>::iterator it = this->delimiters.begin(); 
     it != this->delimiters.end(); ++it) {
     std::string curr = *it;
-    std::printf("%s ", curr.c_str());
+    if (!equals_str(curr, "(") && !equals_str(curr, ")")) {
+      std::printf("%s ", curr.c_str());  
+    }
   }
   std::printf("\n"); 
 }
@@ -108,15 +115,15 @@ void ProgramWalker::print_delimiters() {
 
 void ProgramWalker::print_syntax_errors() {
   std::printf("Syntax Errors: ");
-  for (std::vector<Token>::iterator it = this->missing.begin(); 
+  for (std::set<Token>::iterator it = this->missing.begin(); 
     it != this->missing.end(); ++it) {
     Token curr = *it;
     std::printf("%s ", curr.text.c_str());
   }
-  for (std::vector<Token>::iterator it = this->unexpected.begin(); 
+  for (std::set<std::string>::iterator it = this->unexpected.begin(); 
     it != this->unexpected.end(); ++it) {
-    Token curr = *it;
-    std::printf("%s ", curr.text.c_str());
+    std::string curr = *it;
+    std::printf("%s ", curr.c_str());
   }
   std::printf("\n"); 
 }
@@ -139,9 +146,17 @@ bool is_operator(char c) {
   return c == '+' || c == '-' || c == '*' || c == '/' || c == '=';
 }
 
-// The guidelines are to only take lowercase letters.
 bool is_letter(char c) {
   return in_ascii_range(c, 65, 90) || in_ascii_range(c, 97, 122);
+}
+
+bool is_all_capital(std::string s) {
+  for (size_t i = 0; i < s.size(); i++) {
+    if (!in_ascii_range(s[i], 65, 90)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 bool is_keyword(std::string s) {
@@ -207,8 +222,12 @@ void handle_letter(std::string &to_parse, std::vector<Token> &tokens) {
       break;
     }
   }
-  if (is_keyword(text)) {
-    tokens.push_back(Keyword(text));
+  if (is_all_capital(text)) {
+    if (is_keyword(text)) {
+      tokens.push_back(Keyword(text));
+    } else {
+      tokens.push_back(Unexpected(text));
+    }
   } else {
     tokens.push_back(Identifier(text));
   }
@@ -337,6 +356,8 @@ bool is_end(LineWalker &line_walker) {
   return text_is(line_walker.tokens, line_walker.index, "END");
 }
 
+// TODO: Arithmetic expressions
+// TODO: Keyword lines
 void parse_line(LineWalker &line_walker) {
   if (line_walker.tokens.size() == 0) {
     return;
