@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <iostream>
 #include <cstring>
+#include <fstream>
 
 #include "pa3.h"
 
@@ -50,7 +51,7 @@ bool equals_str(std::string a, std::string b) {
 }
 
 bool is_space(char c) {
-  return c == ' ';
+  return c == ' ' || c == '\t';
 }
 
 bool is_numeric(char c) {
@@ -144,9 +145,9 @@ void handle_delimiter(std::string &to_parse, Stack<Token> &tokens) {
   tokens.push(Delimiter(text));
 }
 
-Stack<Token> parse_line(std::string to_parse, Stack<Token> tokens) {
+void parse_line(std::string &to_parse, Stack<Token> &tokens) {
   if (to_parse.size() == 0) {
-    return tokens;
+    return;
   }
   char curr = to_parse[0];
   if (is_numeric(curr)) { // Numbers
@@ -170,14 +171,21 @@ Stack<Token> parse_line(std::string to_parse, Stack<Token> tokens) {
   }
 }
 
-int main() {
-  std::string to_parse = "FOR (1, a, +)";
-  Stack<Token> tokens;
-  tokens = parse_line(to_parse, tokens);
-  Node<Token> *token = tokens.pop();
-  while (token != NULL) {
-    std::cout << token->get_value().text << std::endl;
-    token = tokens.pop();
+int main(int argc, char **argv) {
+  std::ifstream ifs;
+  ifs.open(argv[1], std::ifstream::in);
+  while (!ifs.eof()) { // While there are more lines
+    Stack<Token> tokens;
+    char next_line[256];
+    ifs.getline(next_line, 256);
+    std::string to_parse(next_line);
+    parse_line(to_parse, tokens);
+    Node<Token> *token = tokens.pop();
+    while (token != NULL) {
+      std::cout << token->get_value().text << " ";
+      token = tokens.pop();   
+    }
+    std::cout << std::endl;
   }
   return 0;
 }
