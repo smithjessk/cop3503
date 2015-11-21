@@ -43,7 +43,7 @@ Node<T> *Stack<T>::pop() {
   return old_head;
 }
 
-bool in_ascii_ranges(char c, int lower, int upper) {
+bool in_ascii_range(char c, int lower, int upper) {
   return lower <= (int)(c) && (int)(c) <= upper;
 }
 
@@ -56,7 +56,7 @@ bool is_space(char c) {
 }
 
 bool is_numeric(char c) {
-  return in_ascii_ranges(c, 48, 57);
+  return in_ascii_range(c, 48, 57);
 }
 
 // Returns true if the token is used inside any of the operator tokens. Note 
@@ -65,8 +65,9 @@ bool is_operator(char c) {
   return c == '+' || c == '-' || c == '*' || c == '/' || c == '=';
 }
 
+// The guidelines are to only take lowercase letters.
 bool is_letter(char c) {
-  return in_ascii_ranges(c, 65, 90) || in_ascii_ranges(c, 97, 122);
+  return in_ascii_range(c, 65, 90) || in_ascii_range(c, 97, 122);
 }
 
 bool is_keyword(std::string s) {
@@ -179,9 +180,61 @@ std::string read_line(std::ifstream &ifs) {
   return std::string(line);
 }
 
-// Both tokens and node are for this line in particular
-void parse_line(std::vector<Token> &tokens) {
-  return;
+bool text_is(std::vector<Token> &tokens, int index, std::string to_compare) {
+  return equals_str(tokens.at(index).text, to_compare);
+}
+
+bool type_is(std::vector<Token> &tokens, int index, std::string to_compare) {
+  return equals_str(tokens.at(index).type, to_compare);
+}
+
+bool is_for_declarataion(LineWalker &line_walker) {
+  return text_is(line_walker.tokens, line_walker.index, "FOR");
+}
+
+bool is_left_paren(std::vector<Token> &tokens, int index) {
+  return text_is(tokens, index, "(");
+}
+
+bool is_identifier(std::vector<Token> &tokens, int index) {
+  return type_is(tokens, index, "identifier");
+}
+
+void expect_left_paren(LineWalker &line_walker) {
+  if (!text_is(line_walker.tokens, line_walker.index, "(")) {
+    line_walker.missing.push_back(Delimiter("("));
+  }
+  line_walker.index++;
+}
+
+void expect_comma(LineWalker &line_walker) {
+  if (!text_is(line_walker.tokens, line_walker.index, ",")) {
+    line_walker.missing.push_back(Delimiter(","));
+  }
+  line_walker.index++;
+}
+
+void expect_identifier(LineWalker &line_walker) {
+  if (!type_is(line_walker.tokens, line_walker.index, "identifier")) {
+    line_walker.missing.push_back(Identifier("_unknown_"));
+  }
+  line_walker.index++;
+}
+
+void parse_for_declaration(LineWalker &line_walker) {
+  line_walker.index++;
+  expect_left_paren(line_walker);
+  expect_identifier(line_walker);
+  expect_comma(line_walker);
+}
+
+void parse_line(LineWalker &line_walker) {
+  if (line_walker.tokens.size() == 0) {
+    return;
+  }
+  if (is_for_declarataion(line_walker)) {
+    parse_for_declaration(line_walker);
+  }
 }
 
 int main(int argc, char **argv) {
@@ -195,13 +248,11 @@ int main(int argc, char **argv) {
     program.add_line(line);
   }
   for (size_t i = 0; i < program.lines.size(); i++) {
-    std::vector<Token> tokens = program.lines.at(i).tokens;
-    std::cout << tokens.size() << std::endl;
-    for (size_t i = 0; i < tokens.size(); i++) {
-      std::printf("(%s %s) ", tokens.at(i).text.c_str(), 
-        tokens.at(i).type.c_str());
+    LineWalker lw(program.lines.at(i).tokens);
+    parse_line(lw);
+    for (size_t j = 0; j < lw.missing.size(); j++) {
+      std::cout << "Missing " << lw.missing.at(j).text << std::endl;
     }
-    std::printf("\n");
   }
   return 0;
 }

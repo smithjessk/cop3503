@@ -83,6 +83,18 @@ struct SelfOperator : Operator {
   SelfOperator(std::string in): Operator(in, "self_operator") {}
 };
 
+struct Expression {};
+
+struct ForDeclaration : Expression {
+  Identifier counter_var;
+  Constant upper_limit;
+  Operator oper;
+  ForDeclaration(Identifier i, Constant c, Operator o):
+    counter_var(i),
+    upper_limit(c),
+    oper(o) {}
+};
+
 struct Operation {};
 
 template <typename T>
@@ -96,6 +108,17 @@ struct BinaryOperation : Operator {
   T left;
   U right;
   BinaryOperator op;
+};
+
+struct LineWalker {
+  std::vector<Token> tokens;
+  std::vector<Token> missing;
+  std::vector<Token> unexpected;
+  int index;
+  LineWalker(std::vector<Token> tokens) {
+    this->tokens = tokens;
+    index = 0;
+  }
 };
 
 #endif // PA3_HEADER
