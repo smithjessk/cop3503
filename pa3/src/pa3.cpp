@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cstring>
 #include <fstream>
+#include <vector>
 
 #include "pa3.h"
 
@@ -81,11 +82,11 @@ void jump(std::string &s, int size) {
   s = s.substr(size);
 }
 
-Token begin("\\BOF");
-Token end("\\EOF");
+Token begin("\\BOF", "begin_of_file");
+Token end("\\EOF", "end_of_file");
 
 // Called when to_parse[0] is numeric
-void handle_number(std::string &to_parse, Stack<Token> &tokens) {
+void handle_number(std::string &to_parse, std::vector<Token> &tokens) {
   char curr = to_parse[0];
   std::string text(1, curr);
   jump(to_parse, 1);
@@ -98,27 +99,27 @@ void handle_number(std::string &to_parse, Stack<Token> &tokens) {
       break;
     }
   }
-  tokens.push(Constant(text));
+  tokens.push_back(Constant(text));
 }
 
 // Possible issue: This doesn't really do anything if there are two operators 
 // not separated by whitespace that should be. For instance, this doesn't 
 // really care about +-
-void handle_operator(std::string &to_parse, Stack<Token> &tokens) {
+void handle_operator(std::string &to_parse, std::vector<Token> &tokens) {
   char curr = to_parse[0];
   std::string text(1, curr);
   jump(to_parse, 1);
   if (curr == '+' && to_parse[0] == '+') {
     text = text + '+';
     jump(to_parse, 1);
-    tokens.push(SelfOperator(text));
+    tokens.push_back(SelfOperator(text));
   } else {
-    tokens.push(BinaryOperator(text));
+    tokens.push_back(BinaryOperator(text));
   }
 }
 
 // Called when to_parse[0] is a letter
-void handle_letter(std::string &to_parse, Stack<Token> &tokens) {
+void handle_letter(std::string &to_parse, std::vector<Token> &tokens) {
   char curr = to_parse[0];
   std::string text(1, curr);
   jump(to_parse, 1);
@@ -132,43 +133,43 @@ void handle_letter(std::string &to_parse, Stack<Token> &tokens) {
     }
   }
   if (is_keyword(text)) {
-    tokens.push(Keyword(text));
+    tokens.push_back(Keyword(text));
   } else {
-    tokens.push(Identifier(text));
+    tokens.push_back(Identifier(text));
   }
 }
 
-void handle_delimiter(std::string &to_parse, Stack<Token> &tokens) {
+void handle_delimiter(std::string &to_parse, std::vector<Token> &tokens) {
   char curr = to_parse[0];
   std::string text(1, curr);
   jump(to_parse, 1);
-  tokens.push(Delimiter(text));
+  tokens.push_back(Delimiter(text));
 }
 
-void parse_line(std::string &to_parse, Stack<Token> &tokens) {
+void tokenize_line(std::string &to_parse, std::vector<Token> &tokens) {
   if (to_parse.size() == 0) {
     return;
   }
   char curr = to_parse[0];
   if (is_numeric(curr)) { // Numbers
     handle_number(to_parse, tokens);
-    return parse_line(to_parse, tokens);
+    return tokenize_line(to_parse, tokens);
   } else if (is_operator(curr)) { // Operators
     handle_operator(to_parse, tokens);
-    return parse_line(to_parse, tokens);
+    return tokenize_line(to_parse, tokens);
   } else if (is_letter(curr)) { // Letters
     handle_letter(to_parse, tokens);
-    return parse_line(to_parse, tokens);
+    return tokenize_line(to_parse, tokens);
   } else if (is_delimiter(curr)) {
     handle_delimiter(to_parse, tokens);
-    return parse_line(to_parse, tokens);
+    return tokenize_line(to_parse, tokens);
   } else if (is_space(curr)) { // Spaces
     jump(to_parse, 1);
-    return parse_line(to_parse, tokens);
+    return tokenize_line(to_parse, tokens);
   } else {
     std::cerr << "Encountered unknown token: " << curr << std::endl;
     jump(to_parse, 1);
-    return parse_line(to_parse, tokens);
+    return tokenize_line(to_parse, tokens);
   }
 }
 
@@ -178,6 +179,11 @@ std::string read_line(std::ifstream &ifs) {
   return std::string(line);
 }
 
+// Both tokens and node are for this line in particular
+void parse_line(std::vector<Token> &tokens) {
+  return;
+}
+
 int main(int argc, char **argv) {
   std::ifstream ifs;
   ifs.open(argv[1], std::ifstream::in);
@@ -185,8 +191,17 @@ int main(int argc, char **argv) {
   while (!ifs.eof()) { // While there are more lines
     Line line;
     std::string to_parse = read_line(ifs);
-    parse_line(to_parse, line.tokens);
+    tokenize_line(to_parse, line.tokens);
     program.add_line(line);
+  }
+  for (size_t i = 0; i < program.lines.size(); i++) {
+    std::vector<Token> tokens = program.lines.at(i).tokens;
+    std::cout << tokens.size() << std::endl;
+    for (size_t i = 0; i < tokens.size(); i++) {
+      std::printf("(%s %s) ", tokens.at(i).text.c_str(), 
+        tokens.at(i).type.c_str());
+    }
+    std::printf("\n");
   }
   return 0;
 }

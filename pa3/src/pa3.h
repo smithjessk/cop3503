@@ -29,56 +29,58 @@ class Stack {
 // Extended by all tokens
 struct Token {
   std::string text;
-  Token(std::string in) {
-    text = in;
+  std::string type;
+  Token(std::string text, std::string type) {
+    this->text = text;
+    this->type = type;
   }
 };
 
 struct Line {
-  Stack<Token> tokens;
+  std::vector<Token> tokens;
 };
 
 struct CodeBlock {
-  Stack<Line> lines;
+  std::vector<Line> lines;
 
   void add_line(Line l) {
-    this->lines.push(l);
+    lines.push_back(l);
   }
 };
 
 // E.g. a b cdef
 struct Identifier : Token {
-  Identifier(std::string in): Token(in) {}
+  Identifier(std::string in): Token(in, "identifier") {}
 };
 
 // E.g. 1 2 345
 struct Constant : Token {
-  Constant(std::string in): Token(in) {}
+  Constant(std::string in): Token(in, "constant") {}
 };
 
 // I.e., FOR BEGIN END
 struct Keyword : Token {
-  Keyword(std::string in): Token(in) {}
+  Keyword(std::string in): Token(in, "keyword") {}
 };
 
 // I.e., ( ) ; ,
 struct Delimiter : Token {
-  Delimiter(std::string in): Token(in) {}
+  Delimiter(std::string in): Token(in, "delimiter") {}
 };
 
-// Both binary and self
+// Both binary and self (hence the two-argument constructor).
 struct Operator : Token {
-  Operator(std::string in): Token(in) {}
+  Operator(std::string in, std::string type): Token(in, type) {}
 };
 
 // I.e., + - * / = 
 struct BinaryOperator : Operator {
-  BinaryOperator(std::string in): Operator(in) {}
+  BinaryOperator(std::string in): Operator(in, "binary_operator") {}
 };
 
 // I.e., ++
 struct SelfOperator : Operator {
-  SelfOperator(std::string in): Operator(in) {}
+  SelfOperator(std::string in): Operator(in, "self_operator") {}
 };
 
 struct Operation {};
