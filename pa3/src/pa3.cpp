@@ -167,25 +167,26 @@ void parse_line(std::string &to_parse, Stack<Token> &tokens) {
     return parse_line(to_parse, tokens);
   } else {
     std::cerr << "Encountered unknown token: " << curr << std::endl;
+    jump(to_parse, 1);
     return parse_line(to_parse, tokens);
   }
+}
+
+std::string read_line(std::ifstream &ifs) {
+  char line[256];
+  ifs.getline(line, 256);
+  return std::string(line);
 }
 
 int main(int argc, char **argv) {
   std::ifstream ifs;
   ifs.open(argv[1], std::ifstream::in);
+  CodeBlock program;
   while (!ifs.eof()) { // While there are more lines
-    Stack<Token> tokens;
-    char next_line[256];
-    ifs.getline(next_line, 256);
-    std::string to_parse(next_line);
-    parse_line(to_parse, tokens);
-    Node<Token> *token = tokens.pop();
-    while (token != NULL) {
-      std::cout << token->get_value().text << " ";
-      token = tokens.pop();   
-    }
-    std::cout << std::endl;
+    Line line;
+    std::string to_parse = read_line(ifs);
+    parse_line(to_parse, line.tokens);
+    program.add_line(line);
   }
   return 0;
 }

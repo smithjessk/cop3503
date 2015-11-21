@@ -34,6 +34,18 @@ struct Token {
   }
 };
 
+struct Line {
+  Stack<Token> tokens;
+};
+
+struct CodeBlock {
+  Stack<Line> lines;
+
+  void add_line(Line l) {
+    this->lines.push(l);
+  }
+};
+
 // E.g. a b cdef
 struct Identifier : Token {
   Identifier(std::string in): Token(in) {}
