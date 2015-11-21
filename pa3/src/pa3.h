@@ -99,6 +99,9 @@ struct LineWalker {
   LineWalker(std::vector<Token> tokens) {
     this->tokens = tokens;
     index = 0;
+    is_for_declaration = false;
+    is_begin = false;
+    is_end = false;
   }
 };
 
@@ -108,11 +111,11 @@ class ProgramWalker {
   int num_for_declarations;
   int num_begins;
   int num_ends;
-  std::set<Token> keywords;
-  std::set<Token> identifiers;
-  std::set<Token> constants;
-  std::set<Token> operators;
-  std::set<Token> delimiters;
+  std::set<std::string> keywords;
+  std::set<std::string> identifiers;
+  std::set<std::string> constants;
+  std::set<std::string> operators;
+  std::set<std::string> delimiters;
   std::vector<Token> missing;
   std::vector<Token> unexpected;
 
@@ -121,6 +124,7 @@ class ProgramWalker {
   void add_line(LineWalker lw);
   void print_loop_depth();
   void print_syntax_errors();
+  void print_keywords();
 };
 
 #endif // PA3_HEADER

@@ -7,6 +7,14 @@
 
 #include "pa3.h"
 
+bool equals_str(std::string a, std::string b) {
+  return 0 == std::strcmp(a.c_str(), b.c_str());
+}
+
+bool type_is(std::vector<Token> &tokens, int index, std::string to_compare) {
+  return equals_str(tokens.at(index).type, to_compare);
+}
+
 ProgramWalker::ProgramWalker() {
   this->max_loop_depth = 0;
   this->num_for_declarations = 0;
@@ -17,13 +25,26 @@ ProgramWalker::ProgramWalker() {
 void ProgramWalker::add_line(LineWalker lw) {
   if (lw.is_for_declaration) {
     this->num_for_declarations++;
+    this->keywords.insert("FOR");
   } else if (lw.is_begin) {
     this->num_begins++;
+    this->keywords.insert("BEGIN");
   } else if (lw.is_end) {
     this->num_ends++;
+    this->keywords.insert("END");
   }
   this->max_loop_depth = std::max(this->max_loop_depth, 
     this->num_for_declarations - this->num_ends); 
+  for (size_t i = 0; i < lw.tokens.size(); i++) {
+    if (type_is(lw.tokens, i, "identifier")) {
+      this->identifiers.insert(lw.tokens.at(i).text);
+    } else if (type_is(lw.tokens, i, "constant")) {
+      this->constants.insert(lw.tokens.at(i).text);
+    } else if (type_is(lw.tokens, i, "binary_operator") || 
+      type_is(lw.tokens, i, "self_operator")) {
+      this->operators.insert(lw.tokens.at(i).text);
+    }
+  }
 }
 
 void ProgramWalker::print_loop_depth() {
@@ -34,12 +55,18 @@ void ProgramWalker::print_loop_depth() {
   }
 }
 
-bool in_ascii_range(char c, int lower, int upper) {
-  return lower <= (int)(c) && (int)(c) <= upper;
+void ProgramWalker::print_keywords() {
+  std::printf("Keywords: ");
+  for (std::set<std::string>::iterator it = this->keywords.begin(); 
+    it != this->keywords.end(); ++it) {
+    std::string curr = *it;
+    std::printf("%s ", curr.c_str());
+  }
+  std::printf("\n");
 }
 
-bool equals_str(std::string a, std::string b) {
-  return 0 == std::strcmp(a.c_str(), b.c_str());
+bool in_ascii_range(char c, int lower, int upper) {
+  return lower <= (int)(c) && (int)(c) <= upper;
 }
 
 bool is_space(char c) {
@@ -175,14 +202,6 @@ bool text_is(std::vector<Token> &tokens, int index, std::string to_compare) {
   return equals_str(tokens.at(index).text, to_compare);
 }
 
-bool type_is(std::vector<Token> &tokens, int index, std::string to_compare) {
-  return equals_str(tokens.at(index).type, to_compare);
-}
-
-bool is_for_declarataion(LineWalker &line_walker) {
-  return text_is(line_walker.tokens, line_walker.index, "FOR");
-}
-
 bool is_identifier(std::vector<Token> &tokens, int index) {
   return type_is(tokens, index, "identifier");
 }
@@ -250,12 +269,29 @@ void parse_for_declaration(LineWalker &line_walker) {
   expect_right_paren(line_walker);
 }
 
+bool is_for_declaration(LineWalker &line_walker) {
+  return text_is(line_walker.tokens, line_walker.index, "FOR");
+}
+
+bool is_begin(LineWalker &line_walker) {
+  return text_is(line_walker.tokens, line_walker.index, "BEGIN");
+}
+
+bool is_end(LineWalker &line_walker) {
+  return text_is(line_walker.tokens, line_walker.index, "END");
+}
+
 void parse_line(LineWalker &line_walker) {
   if (line_walker.tokens.size() == 0) {
     return;
   }
-  if (is_for_declarataion(line_walker)) {
+  if (is_for_declaration(line_walker)) {
     parse_for_declaration(line_walker);
+    line_walker.is_for_declaration = true;
+  } else if (is_begin(line_walker)) {
+    line_walker.is_begin = true;
+  } else if (is_end(line_walker)) {
+    line_walker.is_end = true;
   }
 }
 
@@ -270,19 +306,21 @@ CodeBlock tokenize_input(std::ifstream &ifs) {
   return program;
 }
 
+void parse_program(ProgramWalker &pw, CodeBlock &program) {
+  for (size_t i = 0; i < program.lines.size(); i++) {
+    LineWalker lw(program.lines.at(i).tokens);
+    parse_line(lw);
+    pw.add_line(lw);
+  }
+  pw.print_keywords();
+  // If the number of ends > number of starts, mark "BEGIN", "END" as missing
+}
+
 int main(int argc, char **argv) {
   std::ifstream ifs;
   ifs.open(argv[1], std::ifstream::in);
   CodeBlock program = tokenize_input(ifs);
   ProgramWalker pw;
-  for (size_t i = 0; i < program.lines.size(); i++) {
-    LineWalker lw(program.lines.at(i).tokens);
-    parse_line(lw);
-    pw.add_line(lw);
-    /*for (size_t j = 0; j < lw.missing.size(); j++) {
-      std::cout << "Missing " << lw.missing.at(j).text << " of type " << 
-        lw.missing.at(j).type << std::endl;
-    }*/
-  }
+  parse_program(pw, program);
   return 0;
 }
