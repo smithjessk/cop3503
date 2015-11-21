@@ -2,29 +2,7 @@
 #define PA3_HEADER
 
 #include <string>
-
-template <typename T>
-class Node {
- private:
-  T value;
-  Node<T> *previous;
-
- public:
-  Node(T value, Node<T> *previous);
-  T get_value();
-  Node<T> *get_previous();
-};
-
-template <typename T>
-class Stack {
- private:
-  Node<T> *head;
- 
- public:
-  Stack();
-  Node<T> *push(T value);
-  Node<T> *pop();
-};
+#include <set>
 
 // Extended by all tokens
 struct Token {
@@ -115,10 +93,34 @@ struct LineWalker {
   std::vector<Token> missing;
   std::vector<Token> unexpected;
   int index;
+  bool is_for_declaration;
+  bool is_begin;
+  bool is_end;
   LineWalker(std::vector<Token> tokens) {
     this->tokens = tokens;
     index = 0;
   }
+};
+
+class ProgramWalker {
+ private:
+  int max_loop_depth;
+  int num_for_declarations;
+  int num_begins;
+  int num_ends;
+  std::set<Token> keywords;
+  std::set<Token> identifiers;
+  std::set<Token> constants;
+  std::set<Token> operators;
+  std::set<Token> delimiters;
+  std::vector<Token> missing;
+  std::vector<Token> unexpected;
+
+ public:
+  ProgramWalker();
+  void add_line(LineWalker lw);
+  void print_loop_depth();
+  void print_syntax_errors();
 };
 
 #endif // PA3_HEADER

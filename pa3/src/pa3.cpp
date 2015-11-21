@@ -3,44 +3,35 @@
 #include <cstring>
 #include <fstream>
 #include <vector>
+#include <iterator>
 
 #include "pa3.h"
 
-template <class T>
-Node<T>::Node(T value, Node<T> *previous):
-  value(value),
-  previous(previous) {}
-
-template<class T>
-T Node<T>::get_value() {
-  return this->value;
+ProgramWalker::ProgramWalker() {
+  this->max_loop_depth = 0;
+  this->num_for_declarations = 0;
+  this->num_begins = 0;
+  this->num_ends = 0;
 }
 
-template<class T>
-Node<T> *Node<T>::get_previous() {
-  return this->previous;
-}
-
-template <class T>
-Stack<T>::Stack() {
-  this->head = NULL;
-}
-
-template <class T>
-Node<T> *Stack<T>::push(T value) {
-  Node<T> *prev = head;
-  this->head = new Node<T>(value, prev);
-  return this->head;
-}
-
-template <class T>
-Node<T> *Stack<T>::pop() {
-  if (this->head == NULL) {
-    return NULL;
+void ProgramWalker::add_line(LineWalker lw) {
+  if (lw.is_for_declaration) {
+    this->num_for_declarations++;
+  } else if (lw.is_begin) {
+    this->num_begins++;
+  } else if (lw.is_end) {
+    this->num_ends++;
   }
-  Node<T> *old_head = this->head;
-  this->head = old_head->get_previous();
-  return old_head;
+  this->max_loop_depth = std::max(this->max_loop_depth, 
+    this->num_for_declarations - this->num_ends); 
+}
+
+void ProgramWalker::print_loop_depth() {
+  if (this->num_for_declarations == 0) {
+    std::printf("There were no loops in this program\n");
+  } else {
+    std::printf("Depth of nested loops was %d\n", max_loop_depth);
+  }
 }
 
 bool in_ascii_range(char c, int lower, int upper) {
@@ -192,31 +183,58 @@ bool is_for_declarataion(LineWalker &line_walker) {
   return text_is(line_walker.tokens, line_walker.index, "FOR");
 }
 
-bool is_left_paren(std::vector<Token> &tokens, int index) {
-  return text_is(tokens, index, "(");
-}
-
 bool is_identifier(std::vector<Token> &tokens, int index) {
   return type_is(tokens, index, "identifier");
 }
 
+// Puts the token in as if it was always there. Such beauty, such grace!
+void handle_missing_token(LineWalker &line_walker, Token missing) {
+  line_walker.missing.push_back(missing);
+  std::vector<Token>::iterator it;
+  it = line_walker.tokens.begin();
+  std::advance(it, line_walker.index);
+  line_walker.tokens.insert(it, missing);
+}
+
 void expect_left_paren(LineWalker &line_walker) {
   if (!text_is(line_walker.tokens, line_walker.index, "(")) {
-    line_walker.missing.push_back(Delimiter("("));
+    handle_missing_token(line_walker, Delimiter("("));
   }
   line_walker.index++;
 }
 
+void expect_right_paren(LineWalker &line_walker) {
+  if (!text_is(line_walker.tokens, line_walker.index, ")")) {
+    handle_missing_token(line_walker, Delimiter(")"));
+  }
+  line_walker.index++; 
+}
+
 void expect_comma(LineWalker &line_walker) {
   if (!text_is(line_walker.tokens, line_walker.index, ",")) {
-    line_walker.missing.push_back(Delimiter(","));
+    handle_missing_token(line_walker, Delimiter(","));
   }
   line_walker.index++;
 }
 
 void expect_identifier(LineWalker &line_walker) {
   if (!type_is(line_walker.tokens, line_walker.index, "identifier")) {
-    line_walker.missing.push_back(Identifier("_unknown_"));
+    handle_missing_token(line_walker, Identifier("_unknown_"));
+  }
+  line_walker.index++;
+}
+
+void expect_constant(LineWalker &line_walker) {
+  if (!type_is(line_walker.tokens, line_walker.index, "constant")) {
+    handle_missing_token(line_walker, Constant("_unknown_"));
+  }
+  line_walker.index++;
+}
+
+void expect_operator(LineWalker &line_walker) {
+  if (!type_is(line_walker.tokens, line_walker.index, "binary_operator") &&
+    !type_is(line_walker.tokens, line_walker.index, "self_operator")) {
+    handle_missing_token(line_walker, SelfOperator("_unknown_"));
   }
   line_walker.index++;
 }
@@ -226,6 +244,10 @@ void parse_for_declaration(LineWalker &line_walker) {
   expect_left_paren(line_walker);
   expect_identifier(line_walker);
   expect_comma(line_walker);
+  expect_constant(line_walker);
+  expect_comma(line_walker);
+  expect_operator(line_walker);
+  expect_right_paren(line_walker);
 }
 
 void parse_line(LineWalker &line_walker) {
@@ -237,9 +259,7 @@ void parse_line(LineWalker &line_walker) {
   }
 }
 
-int main(int argc, char **argv) {
-  std::ifstream ifs;
-  ifs.open(argv[1], std::ifstream::in);
+CodeBlock tokenize_input(std::ifstream &ifs) {
   CodeBlock program;
   while (!ifs.eof()) { // While there are more lines
     Line line;
@@ -247,12 +267,22 @@ int main(int argc, char **argv) {
     tokenize_line(to_parse, line.tokens);
     program.add_line(line);
   }
+  return program;
+}
+
+int main(int argc, char **argv) {
+  std::ifstream ifs;
+  ifs.open(argv[1], std::ifstream::in);
+  CodeBlock program = tokenize_input(ifs);
+  ProgramWalker pw;
   for (size_t i = 0; i < program.lines.size(); i++) {
     LineWalker lw(program.lines.at(i).tokens);
     parse_line(lw);
-    for (size_t j = 0; j < lw.missing.size(); j++) {
-      std::cout << "Missing " << lw.missing.at(j).text << std::endl;
-    }
+    pw.add_line(lw);
+    /*for (size_t j = 0; j < lw.missing.size(); j++) {
+      std::cout << "Missing " << lw.missing.at(j).text << " of type " << 
+        lw.missing.at(j).type << std::endl;
+    }*/
   }
   return 0;
 }
