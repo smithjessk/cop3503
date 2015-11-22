@@ -7,12 +7,19 @@
 
 #include "pa3.h"
 
+// Tests string equality
 bool equals_str(std::string a, std::string b) {
   return 0 == std::strcmp(a.c_str(), b.c_str());
 }
 
+// Test the type of a token
 bool type_is(std::vector<Token> &tokens, int index, std::string to_compare) {
   return equals_str(tokens.at(index).type, to_compare);
+}
+
+// Test the text of a token
+bool text_is(std::vector<Token> &tokens, int index, std::string to_compare) {
+  return equals_str(tokens.at(index).text, to_compare);
 }
 
 ProgramWalker::ProgramWalker() {
@@ -161,12 +168,13 @@ bool is_numeric(char c) {
   return in_ascii_range(c, 48, 57);
 }
 
-// Returns true if the token is used inside any of the operator tokens. Note 
+// Returns if the token is used inside any of the operator tokens. Note 
 // that this includes = and the + inside ++. 
 bool is_operator(char c) {
   return c == '+' || c == '-' || c == '*' || c == '/' || c == '=';
 }
 
+// Accepts capital letters because those are used in keywords.
 bool is_letter(char c) {
   return in_ascii_range(c, 65, 90) || in_ascii_range(c, 97, 122);
 }
@@ -189,14 +197,12 @@ bool is_delimiter(char c) {
   return c == '(' || c == ')' || c == ';' || c == ',';
 }
 
+// Used to move ahead in the currently-being-tokenized string. 
 void jump(std::string &s, int size) {
   s = s.substr(size);
 }
 
-Token begin("\\BOF", "begin_of_file");
-Token end("\\EOF", "end_of_file");
-
-// Called when to_parse[0] is numeric
+// Called when we need to construct a numeric literal.
 void handle_number(std::string &to_parse, std::vector<Token> &tokens) {
   char curr = to_parse[0];
   std::string text(1, curr);
@@ -213,9 +219,6 @@ void handle_number(std::string &to_parse, std::vector<Token> &tokens) {
   tokens.push_back(Constant(text));
 }
 
-// Possible issue: This doesn't really do anything if there are two operators 
-// not separated by whitespace that should be. For instance, this doesn't 
-// really care about +-
 void handle_operator(std::string &to_parse, std::vector<Token> &tokens) {
   char curr = to_parse[0];
   std::string text(1, curr);
@@ -229,7 +232,7 @@ void handle_operator(std::string &to_parse, std::vector<Token> &tokens) {
   }
 }
 
-// Called when to_parse[0] is a letter
+// Called when we need to construct either an identifier or a keyword.
 void handle_letter(std::string &to_parse, std::vector<Token> &tokens) {
   char curr = to_parse[0];
   std::string text(1, curr);
@@ -254,6 +257,7 @@ void handle_letter(std::string &to_parse, std::vector<Token> &tokens) {
   }
 }
 
+// Called for parentheses, etc.
 void handle_delimiter(std::string &to_parse, std::vector<Token> &tokens) {
   char curr = to_parse[0];
   std::string text(1, curr);
@@ -261,6 +265,7 @@ void handle_delimiter(std::string &to_parse, std::vector<Token> &tokens) {
   tokens.push_back(Delimiter(text));
 }
 
+// Turn a raw input line of the file into a vector of tokens.
 void tokenize_line(std::string &to_parse, std::vector<Token> &tokens) {
   if (to_parse.size() == 0) {
     return;
@@ -288,14 +293,11 @@ void tokenize_line(std::string &to_parse, std::vector<Token> &tokens) {
   }
 }
 
+// Read a line from the file
 std::string read_line(std::ifstream &ifs) {
   char line[256];
   ifs.getline(line, 256);
   return std::string(line);
-}
-
-bool text_is(std::vector<Token> &tokens, int index, std::string to_compare) {
-  return equals_str(tokens.at(index).text, to_compare);
 }
 
 bool is_identifier(std::vector<Token> &tokens, int index) {
@@ -374,7 +376,6 @@ void expect_end_line(LineWalker &lw) {
 
 void expect_semicolon(LineWalker &lw) {
   if (!text_is(lw.tokens, lw.index, ";")) {
-    std::cout << "missing semi" << std::endl;
     handle_missing_token(lw, Delimiter(";"));
   }
   lw.index++;
@@ -414,7 +415,7 @@ bool is_binary_operator(LineWalker &lw) {
 }
 
 /**
- * Cases:
+ * Cases (e.g.):
  *
  * 1 + 
  * 1 + ;
@@ -450,6 +451,8 @@ void parse_statement(LineWalker &lw) {
   expect_end_line(lw);
 }
 
+// Go through the tokens for this line and note which ones are OK and which 
+// aren't.
 void parse_line(LineWalker &lw) {
   if (lw.tokens.size() == 0) {
     return;
@@ -471,6 +474,7 @@ void parse_line(LineWalker &lw) {
   }
 }
 
+// Turn the file into a vector of lines.
 CodeBlock tokenize_input(std::ifstream &ifs) {
   CodeBlock program;
   while (!ifs.eof()) { // While there are more lines
@@ -482,6 +486,7 @@ CodeBlock tokenize_input(std::ifstream &ifs) {
   return program;
 }
 
+// Parse a CodeBlock and print outsummary statistics about the game.
 void parse_program(ProgramWalker &pw, CodeBlock &program) {
   for (size_t i = 0; i < program.lines.size(); i++) {
     LineWalker lw(program.lines.at(i).tokens);

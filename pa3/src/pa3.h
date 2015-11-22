@@ -14,10 +14,12 @@ struct Token {
   }
 };
 
+// Set of tokens. 
 struct Line {
   std::vector<Token> tokens;
 };
 
+// Set of lines.
 struct CodeBlock {
   std::vector<Line> lines;
 
@@ -26,7 +28,7 @@ struct CodeBlock {
   }
 };
 
-// E.g. BEGAN. This can also be e.g. extraneous parentheses
+// E.g. BEGAN
 struct Unexpected : Token {
   Unexpected(std::string in): Token(in, "unexpected") {}
 };
@@ -66,33 +68,6 @@ struct SelfOperator : Operator {
   SelfOperator(std::string in): Operator(in, "self_operator") {}
 };
 
-struct Expression {};
-
-struct ForDeclaration : Expression {
-  Identifier counter_var;
-  Constant upper_limit;
-  Operator oper;
-  ForDeclaration(Identifier i, Constant c, Operator o):
-    counter_var(i),
-    upper_limit(c),
-    oper(o) {}
-};
-
-struct Operation {};
-
-template <typename T>
-struct SelfOperation : Operator {
-  T self;
-  SelfOperator op;
-};
-
-template <typename T, typename U>
-struct BinaryOperation : Operator {
-  T left;
-  U right;
-  BinaryOperator op;
-};
-
 struct LineWalker {
   std::vector<Token> tokens;
   std::vector<Token> missing;
@@ -123,19 +98,27 @@ class ProgramWalker {
   std::set<std::string> delimiters;
   std::set<std::string> unexpected;
   std::set<std::string> missing;
-  // std::vector<Token> unexpected;
 
  public:
   ProgramWalker();
+  // Return -1 if num_begins > num_ends, 0 if they're equal, and 1 if 
+  // num_ends > num_begins
   int compare_n_begins_ends();
+
+  // Incorporate a new parsed line and its tokens.
   void add_line(LineWalker lw);
+
+  // Used in case we're missing begins or ends.
   void insert_missing(std::string s);
+
   void print_loop_depth();
   void print_keywords();
   void print_identifiers();
   void print_constants();
   void print_operators();
   void print_delimiters();
+
+  // Separates syntax errors into missing and unexpected tokens.
   void print_syntax_errors();
 };
 
