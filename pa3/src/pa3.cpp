@@ -366,7 +366,7 @@ void expect_binary_operator(LineWalker &lw) {
 }
 
 void expect_end_line(LineWalker &lw) {
-  while (lw.index < lw.tokens.size()) {
+  while (lw.index < (int)lw.tokens.size()) {
     handle_unexpected_token(lw, lw.tokens.at(lw.index));
     lw.index++;
   }
@@ -464,7 +464,7 @@ void parse_line(LineWalker &lw) {
   } else if (is_operable_token(lw)) {
     parse_statement(lw);
   } else {
-    while (lw.index < lw.tokens.size()) {
+    while (lw.index < (int)lw.tokens.size()) {
       lw.unexpected.push_back(lw.tokens.at(lw.index));
       lw.index++;
     }
