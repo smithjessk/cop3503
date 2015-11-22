@@ -464,7 +464,10 @@ void parse_line(LineWalker &lw) {
   } else if (is_operable_token(lw)) {
     parse_statement(lw);
   } else {
-    // Do something with about how we couldn't parse this line!
+    while (lw.index < lw.tokens.size()) {
+      lw.unexpected.push_back(lw.tokens.at(lw.index));
+      lw.index++;
+    }
   }
 }
 
