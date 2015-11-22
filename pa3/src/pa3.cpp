@@ -413,46 +413,43 @@ bool is_binary_operator(LineWalker &lw) {
   return type_is(lw.tokens, lw.index, "binary_operator");
 }
 
-// Arithmetic or assignment statements
+/**
+ * Cases:
+ *
+ * 1 + 
+ * 1 + ;
+ * 1 + 1;
+ * 1;
+ * 1 + 1
+ * 1
+ */
 void parse_statement(LineWalker &lw) {
-  lw.index++;
-  // Insert semicolon if nescessary
-  if (!text_is(lw.tokens, lw.tokens.size() - 1, ";")) { 
-    lw.missing.push_back(Delimiter(";"));
-    lw.tokens.push_back(Delimiter(";"));
-  }
-  bool should_be_binary_operator = true;
-  if (text_is(lw.tokens, lw.index, "=")) {
-    should_be_binary_operator = false;
-    lw.index++;
-  }
-  while (lw.index < lw.tokens.size() - 1) {
+  lw.index++; // parsed the first character, which must be an identifier.
+  bool should_be_bin_op = true; // We should next have a binary operator
+  bool missing_semicolon = !equals_str(lw.tokens.back().text, ";");
+  int num_tokens = lw.tokens.size();
+  int upper_limit = missing_semicolon ? num_tokens : num_tokens - 1;
+  while (lw.index < upper_limit) {
     if (is_binary_operator(lw)) {
-      if (should_be_binary_operator) {
-        should_be_binary_operator = false;
-      } else {
-        handle_unexpected_token(lw, lw.tokens.at(lw.index));
-        std::cout << "1adding unexpected token " << lw.tokens.at(lw.index).text << std::endl;
+      if (!should_be_bin_op) {
+        lw.unexpected.push_back(lw.tokens.at(lw.index));
       }
     } else if (is_operable_token(lw)) {
-      if (!should_be_binary_operator) {
-        should_be_binary_operator = true;
-      } else {
-        handle_unexpected_token(lw, lw.tokens.at(lw.index));
-        std::cout << "2adding unexpected token " << lw.tokens.at(lw.index).text << std::endl;
+      if (should_be_bin_op) {
+        lw.unexpected.push_back(lw.tokens.at(lw.index));
       }
-    } else {
-      handle_unexpected_token(lw, lw.tokens.at(lw.index));
-      std::cout << "3adding unexpected token " << lw.tokens.at(lw.index).text << std::endl;
     }
     lw.index++;
+    should_be_bin_op = !should_be_bin_op;
   }
-  expect_semicolon(lw);
+  if (!missing_semicolon) {
+    expect_semicolon(lw);
+  } else {
+    lw.missing.push_back(Delimiter(";"));
+  }
   expect_end_line(lw);
 }
 
-// TODO: Arithmetic expressions
-// TODO: Keyword lines
 void parse_line(LineWalker &lw) {
   if (lw.tokens.size() == 0) {
     return;

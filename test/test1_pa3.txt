@@ -2,6 +2,6 @@ FOR (i, 10, ++)
 BEGIN
 	FOR (j, 10, ++)
 	BEGAN
-	sum = sum + i + j
+	sum = sum + i + j;
 	END
 END
