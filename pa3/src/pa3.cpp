@@ -64,7 +64,6 @@ void ProgramWalker::add_line(LineWalker lw) {
 
 void ProgramWalker::insert_missing(std::string s) {
   this->missing.insert(s);
-  std::cout << "added " << s << std::endl;
 }
 
 void ProgramWalker::print_loop_depth() {
@@ -130,12 +129,14 @@ void ProgramWalker::print_delimiters() {
 
 
 void ProgramWalker::print_syntax_errors() {
-  std::printf("Syntax Errors: ");
+  std::printf("Syntax Errors: \n");
+  std::printf("Missing Input: ");
   for (std::set<std::string>::iterator it = this->missing.begin(); 
     it != this->missing.end(); ++it) {
     std::string curr = *it;
     std::printf("%s ", curr.c_str());
   }
+  std::printf("\nUnexpected Input: ");
   for (std::set<std::string>::iterator it = this->unexpected.begin(); 
     it != this->unexpected.end(); ++it) {
     std::string curr = *it;
@@ -408,6 +409,11 @@ void parse_program(ProgramWalker &pw, CodeBlock &program) {
     parse_line(lw);
     pw.add_line(lw);
   }
+  if (pw.compare_n_begins_ends() < 0) { // more begins than ends
+    pw.insert_missing("END");
+  } else if (pw.compare_n_begins_ends() > 0) { // more ends than begins
+    pw.insert_missing("BEGIN");
+  }
   pw.print_loop_depth();
   pw.print_keywords();
   pw.print_identifiers();
@@ -415,11 +421,6 @@ void parse_program(ProgramWalker &pw, CodeBlock &program) {
   pw.print_operators();
   pw.print_delimiters();
   pw.print_syntax_errors();
-  if (pw.compare_n_begins_ends() < 0) { // more begins than ends
-    pw.insert_missing("END");
-  } else if (pw.compare_n_begins_ends() > 0) { // more ends than begins
-    pw.insert_missing("BEGIN");
-  }
 }
 
 int main(int argc, char **argv) {
