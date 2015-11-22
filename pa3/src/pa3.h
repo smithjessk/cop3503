@@ -26,7 +26,7 @@ struct CodeBlock {
   }
 };
 
-// E.g. BEGAN
+// E.g. BEGAN. This can also be e.g. extraneous parentheses
 struct Unexpected : Token {
   Unexpected(std::string in): Token(in, "unexpected") {}
 };
@@ -96,7 +96,7 @@ struct BinaryOperation : Operator {
 struct LineWalker {
   std::vector<Token> tokens;
   std::vector<Token> missing;
-  // std::vector<Token> unexpected;
+  std::vector<Token> unexpected;
   int index;
   bool is_for_declaration;
   bool is_begin;

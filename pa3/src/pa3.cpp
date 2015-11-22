@@ -60,6 +60,9 @@ void ProgramWalker::add_line(LineWalker lw) {
       this->unexpected.insert(lw.tokens.at(i).text);
     }
   }
+  for (size_t i = 0; i < lw.unexpected.size(); i++) {
+    this->unexpected.insert(lw.unexpected.at(i).text);
+  }
 }
 
 void ProgramWalker::insert_missing(std::string s) {
@@ -307,6 +310,10 @@ void handle_missing_token(LineWalker &line_walker, Token missing) {
   line_walker.tokens.insert(it, missing);
 }
 
+void handle_unexpected_token(LineWalker &line_walker, Token unexpected) {
+  line_walker.unexpected.push_back(unexpected);
+}
+
 void expect_left_paren(LineWalker &line_walker) {
   if (!text_is(line_walker.tokens, line_walker.index, "(")) {
     handle_missing_token(line_walker, Delimiter("("));
@@ -350,6 +357,12 @@ void expect_operator(LineWalker &line_walker) {
   line_walker.index++;
 }
 
+void expect_end_line(LineWalker &line_walker) {
+  for (size_t i = line_walker.index; i < line_walker.tokens.size(); i++) {
+    handle_unexpected_token(line_walker, line_walker.tokens.at(i));
+  }
+}
+
 void parse_for_declaration(LineWalker &line_walker) {
   line_walker.index++;
   expect_left_paren(line_walker);
@@ -359,9 +372,7 @@ void parse_for_declaration(LineWalker &line_walker) {
   expect_comma(line_walker);
   expect_operator(line_walker);
   expect_right_paren(line_walker);
-
-  // Add any extra tokens into the unexpected set
-  
+  expect_end_line(line_walker);
 }
 
 bool is_for_declaration(LineWalker &line_walker) {
