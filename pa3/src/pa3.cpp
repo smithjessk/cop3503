@@ -133,13 +133,13 @@ void ProgramWalker::print_delimiters() {
 
 void ProgramWalker::print_syntax_errors() {
   std::printf("Syntax Errors: \n");
-  std::printf("Missing Input: ");
+  std::printf("\tMissing Input: ");
   for (std::set<std::string>::iterator it = this->missing.begin(); 
     it != this->missing.end(); ++it) {
     std::string curr = *it;
     std::printf("%s ", curr.c_str());
   }
-  std::printf("\nUnexpected Input: ");
+  std::printf("\n\tUnexpected Input: ");
   for (std::set<std::string>::iterator it = this->unexpected.begin(); 
     it != this->unexpected.end(); ++it) {
     std::string curr = *it;
