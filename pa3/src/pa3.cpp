@@ -23,7 +23,6 @@ ProgramWalker::ProgramWalker() {
 }
 
 int ProgramWalker::compare_n_begins_ends() {
-  std::printf("b, e: %d, %d\n", num_begins, num_ends);
   if (num_begins > num_ends) {
     return -1;
   }
@@ -59,6 +58,9 @@ void ProgramWalker::add_line(LineWalker lw) {
     } else if (type_is(lw.tokens, i, "unexpected")) {
       this->unexpected.insert(lw.tokens.at(i).text);
     }
+  }
+  for (size_t i = 0; i < lw.missing.size(); i++) {
+    this->missing.insert(lw.missing.at(i).text);
   }
   for (size_t i = 0; i < lw.unexpected.size(); i++) {
     this->unexpected.insert(lw.unexpected.at(i).text);
@@ -129,7 +131,6 @@ void ProgramWalker::print_delimiters() {
   }
   std::printf("\n"); 
 }
-
 
 void ProgramWalker::print_syntax_errors() {
   std::printf("Syntax Errors: \n");
@@ -301,105 +302,172 @@ bool is_identifier(std::vector<Token> &tokens, int index) {
   return type_is(tokens, index, "identifier");
 }
 
-// Puts the token in as if it was always there. Such beauty, such grace!
-void handle_missing_token(LineWalker &line_walker, Token missing) {
-  line_walker.missing.push_back(missing);
+// Puts the token in as if it was always there.
+void handle_missing_token(LineWalker &lw, Token missing) {
+  lw.missing.push_back(missing);
   std::vector<Token>::iterator it;
-  it = line_walker.tokens.begin();
-  std::advance(it, line_walker.index);
-  line_walker.tokens.insert(it, missing);
+  it = lw.tokens.begin();
+  std::advance(it, lw.index);
+  lw.tokens.insert(it, missing);
 }
 
-void handle_unexpected_token(LineWalker &line_walker, Token unexpected) {
-  line_walker.unexpected.push_back(unexpected);
+void handle_unexpected_token(LineWalker &lw, Token unexpected) {
+  lw.unexpected.push_back(unexpected);
 }
 
-void expect_left_paren(LineWalker &line_walker) {
-  if (!text_is(line_walker.tokens, line_walker.index, "(")) {
-    handle_missing_token(line_walker, Delimiter("("));
+void expect_left_paren(LineWalker &lw) {
+  if (!text_is(lw.tokens, lw.index, "(")) {
+    handle_missing_token(lw, Delimiter("("));
   }
-  line_walker.index++;
+  lw.index++;
 }
 
-void expect_right_paren(LineWalker &line_walker) {
-  if (!text_is(line_walker.tokens, line_walker.index, ")")) {
-    handle_missing_token(line_walker, Delimiter(")"));
+void expect_right_paren(LineWalker &lw) {
+  if (!text_is(lw.tokens, lw.index, ")")) {
+    handle_missing_token(lw, Delimiter(")"));
   }
-  line_walker.index++; 
+  lw.index++; 
 }
 
-void expect_comma(LineWalker &line_walker) {
-  if (!text_is(line_walker.tokens, line_walker.index, ",")) {
-    handle_missing_token(line_walker, Delimiter(","));
+void expect_comma(LineWalker &lw) {
+  if (!text_is(lw.tokens, lw.index, ",")) {
+    handle_missing_token(lw, Delimiter(","));
   }
-  line_walker.index++;
+  lw.index++;
 }
 
-void expect_identifier(LineWalker &line_walker) {
-  if (!type_is(line_walker.tokens, line_walker.index, "identifier")) {
-    handle_missing_token(line_walker, Identifier("_unknown_"));
+void expect_identifier(LineWalker &lw) {
+  if (!type_is(lw.tokens, lw.index, "identifier")) {
+    handle_missing_token(lw, Identifier("_unknown_"));
   }
-  line_walker.index++;
+  lw.index++;
 }
 
-void expect_constant(LineWalker &line_walker) {
-  if (!type_is(line_walker.tokens, line_walker.index, "constant")) {
-    handle_missing_token(line_walker, Constant("_unknown_"));
+void expect_constant(LineWalker &lw) {
+  if (!type_is(lw.tokens, lw.index, "constant")) {
+    handle_missing_token(lw, Constant("_unknown_"));
   }
-  line_walker.index++;
+  lw.index++;
 }
 
-void expect_operator(LineWalker &line_walker) {
-  if (!type_is(line_walker.tokens, line_walker.index, "binary_operator") &&
-    !type_is(line_walker.tokens, line_walker.index, "self_operator")) {
-    handle_missing_token(line_walker, SelfOperator("_unknown_"));
+void expect_operator(LineWalker &lw) {
+  if (!type_is(lw.tokens, lw.index, "binary_operator") &&
+    !type_is(lw.tokens, lw.index, "self_operator")) {
+    handle_missing_token(lw, SelfOperator("_unknown_"));
   }
-  line_walker.index++;
+  lw.index++;
 }
 
-void expect_end_line(LineWalker &line_walker) {
-  for (size_t i = line_walker.index; i < line_walker.tokens.size(); i++) {
-    handle_unexpected_token(line_walker, line_walker.tokens.at(i));
+void expect_binary_operator(LineWalker &lw) {
+  if (!type_is(lw.tokens, lw.index, "binary_operator")) {
+    handle_missing_token(lw, BinaryOperator("_unknown_"));
+  }
+  lw.index++;
+}
+
+void expect_end_line(LineWalker &lw) {
+  while (lw.index < lw.tokens.size()) {
+    handle_unexpected_token(lw, lw.tokens.at(lw.index));
+    lw.index++;
   }
 }
 
-void parse_for_declaration(LineWalker &line_walker) {
-  line_walker.index++;
-  expect_left_paren(line_walker);
-  expect_identifier(line_walker);
-  expect_comma(line_walker);
-  expect_constant(line_walker);
-  expect_comma(line_walker);
-  expect_operator(line_walker);
-  expect_right_paren(line_walker);
-  expect_end_line(line_walker);
+void expect_semicolon(LineWalker &lw) {
+  if (!text_is(lw.tokens, lw.index, ";")) {
+    std::cout << "missing semi" << std::endl;
+    handle_missing_token(lw, Delimiter(";"));
+  }
+  lw.index++;
 }
 
-bool is_for_declaration(LineWalker &line_walker) {
-  return text_is(line_walker.tokens, line_walker.index, "FOR");
+void parse_for_declaration(LineWalker &lw) {
+  lw.index++;
+  expect_left_paren(lw);
+  expect_identifier(lw);
+  expect_comma(lw);
+  expect_constant(lw);
+  expect_comma(lw);
+  expect_operator(lw);
+  expect_right_paren(lw);
+  expect_end_line(lw);
 }
 
-bool is_begin(LineWalker &line_walker) {
-  return text_is(line_walker.tokens, line_walker.index, "BEGIN");
+bool is_for_declaration(LineWalker &lw) {
+  return text_is(lw.tokens, lw.index, "FOR");
 }
 
-bool is_end(LineWalker &line_walker) {
-  return text_is(line_walker.tokens, line_walker.index, "END");
+bool is_begin(LineWalker &lw) {
+  return text_is(lw.tokens, lw.index, "BEGIN");
+}
+
+bool is_end(LineWalker &lw) {
+  return text_is(lw.tokens, lw.index, "END");
+}
+
+bool is_operable_token(LineWalker &lw) {
+  return type_is(lw.tokens, lw.index, "constant") ||
+    type_is(lw.tokens, lw.index, "identifier");
+}
+
+bool is_binary_operator(LineWalker &lw) {
+  return type_is(lw.tokens, lw.index, "binary_operator");
+}
+
+// Arithmetic or assignment statements
+void parse_statement(LineWalker &lw) {
+  lw.index++;
+  // Insert semicolon if nescessary
+  if (!text_is(lw.tokens, lw.tokens.size() - 1, ";")) { 
+    lw.missing.push_back(Delimiter(";"));
+    lw.tokens.push_back(Delimiter(";"));
+  }
+  bool should_be_binary_operator = true;
+  if (text_is(lw.tokens, lw.index, "=")) {
+    should_be_binary_operator = false;
+    lw.index++;
+  }
+  while (lw.index < lw.tokens.size() - 1) {
+    if (is_binary_operator(lw)) {
+      if (should_be_binary_operator) {
+        should_be_binary_operator = false;
+      } else {
+        handle_unexpected_token(lw, lw.tokens.at(lw.index));
+        std::cout << "1adding unexpected token " << lw.tokens.at(lw.index).text << std::endl;
+      }
+    } else if (is_operable_token(lw)) {
+      if (!should_be_binary_operator) {
+        should_be_binary_operator = true;
+      } else {
+        handle_unexpected_token(lw, lw.tokens.at(lw.index));
+        std::cout << "2adding unexpected token " << lw.tokens.at(lw.index).text << std::endl;
+      }
+    } else {
+      handle_unexpected_token(lw, lw.tokens.at(lw.index));
+      std::cout << "3adding unexpected token " << lw.tokens.at(lw.index).text << std::endl;
+    }
+    lw.index++;
+  }
+  expect_semicolon(lw);
+  expect_end_line(lw);
 }
 
 // TODO: Arithmetic expressions
 // TODO: Keyword lines
-void parse_line(LineWalker &line_walker) {
-  if (line_walker.tokens.size() == 0) {
+void parse_line(LineWalker &lw) {
+  if (lw.tokens.size() == 0) {
     return;
   }
-  if (is_for_declaration(line_walker)) {
-    parse_for_declaration(line_walker);
-    line_walker.is_for_declaration = true;
-  } else if (is_begin(line_walker)) {
-    line_walker.is_begin = true;
-  } else if (is_end(line_walker)) {
-    line_walker.is_end = true;
+  if (is_for_declaration(lw)) {
+    parse_for_declaration(lw);
+    lw.is_for_declaration = true;
+  } else if (is_begin(lw)) {
+    lw.is_begin = true;
+  } else if (is_end(lw)) {
+    lw.is_end = true;
+  } else if (is_operable_token(lw)) {
+    parse_statement(lw);
+  } else {
+    // Do something with about how we couldn't parse this line!
   }
 }
 
